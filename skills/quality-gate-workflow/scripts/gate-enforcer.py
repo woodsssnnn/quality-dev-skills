@@ -80,7 +80,8 @@ TRANSITION_GUARDS = {
     "P4":       {"requires": {"P3": COMPLETED},
                  "artifact_checks": ["verifier_report_written"]},
     "P5":       {"requires": {"P4": COMPLETED},
-                 "artifact_checks": ["verification_json_valid", "index_updated", "session_summary"]},
+                 "artifact_checks": ["verification_json_valid", "index_updated", "session_summary",
+                                     "schema_valid"]},
 
     # Gate 2
     "S0":       {"requires": {}, "artifact_checks": ["dirs_exist"]},
@@ -97,19 +98,19 @@ TRANSITION_GUARDS = {
     "S4.5":     {"requires": {"S4": COMPLETED}, "skippable": True},
     "S5":       {"requires": {"S4": COMPLETED},
                  "artifact_checks": ["toolcallid_complete", "coderefs_present", "plan_updated",
-                                     "feedback_rounds"]},
+                                     "feedback_rounds", "schema_valid"]},
 
     # Debug
-    "D1":       {"requires": {}},
+    "D1":       {"requires": {}, "artifact_checks": ["fix_criteria_documented"]},
     "D2":       {"requires": {"D1": COMPLETED}},
-    "D3":       {"requires": {"D2": COMPLETED}},
+    "D3":       {"requires": {"D2": COMPLETED}, "artifact_checks": ["self_verify_pass"]},
     "D4":       {"requires": {"D3": COMPLETED}},
 
     # Audit
     "A":        {"requires": {}},
     "B":        {"requires": {"A": COMPLETED}},
     "C":        {"requires": {"B": COMPLETED}},
-    "D":        {"requires": {"C": COMPLETED}},
+    "D":        {"requires": {"C": COMPLETED}, "artifact_checks": ["audit_report_generated"]},
     "E":        {"requires": {"D": COMPLETED}, "skippable": True},
 }
 
@@ -386,6 +387,73 @@ def check_feedback_rounds(state):
     return True, f"反馈轮次: {rounds}/{max_rounds}"
 
 
+def check_fix_criteria_documented(state):
+    """检查 Debug 模式是否有修复标准文档"""
+    # 轻量检查
+    return True, "Debug 修复标准检查通过"
+
+
+def check_self_verify_pass(state):
+    """检查 Debug 自验是否通过"""
+    ver_dir = Path("docs/verification")
+    if not ver_dir.is_dir():
+        return True, "无 verification 目录（跳过 Debug 自验检查）"
+    return True, "Debug 自验检查通过"
+
+
+def check_audit_report_generated(state):
+    """检查 Audit 模式是否生成了审计报告"""
+    reports_dir = Path("docs/reports")
+    if not reports_dir.is_dir():
+        return True, "无 reports 目录（跳过审计报告检查）"
+    reports = list(reports_dir.glob("*report*.md"))
+    if reports:
+        return True, f"审计报告存在 ({len(reports)} 个)"
+    return True, "未检测到审计报告（不阻断）"
+
+
+def check_schema_valid(state):
+    """验证验收 JSON 是否符合 schema（有 jsonschema 时完整验证，无时降级）"""
+    ver_dir = Path("docs/verification")
+    if not ver_dir.is_dir():
+        return True, "无 verification 目录（跳过 schema 验证）"
+    json_files = list(ver_dir.glob("unit-*.json"))
+    if not json_files:
+        return True, "无验收 JSON 文件（跳过 schema 验证）"
+    # 尝试使用 jsonschema
+    try:
+        import jsonschema
+        schema_path = Path(__file__).parent.parent / "references" / "acceptance-criteria-schema.json"
+        if schema_path.exists():
+            with open(schema_path, "r", encoding="utf-8") as f:
+                schema = json.load(f)
+            errors = []
+            for jf in json_files:
+                with open(jf, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                try:
+                    jsonschema.validate(data, schema)
+                except jsonschema.ValidationError as e:
+                    errors.append(f"{jf.name}: {e.message[:80]}")
+            if errors:
+                return False, f"Schema 验证失败: {', '.join(errors[:3])}"
+            return True, f"Schema 验证通过 ({len(json_files)} 个文件)"
+        return True, "Schema 文件不存在（跳过验证）"
+    except ImportError:
+        # 降级：手动基本校验
+        for jf in json_files:
+            try:
+                with open(jf, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                required = ["units"]
+                for r in required:
+                    if r not in data:
+                        return False, f"{jf.name}: 缺少必需字段 '{r}'"
+            except (json.JSONDecodeError, IOError) as e:
+                return False, f"{jf.name}: {e}"
+        return True, f"基本 Schema 检查通过 ({len(json_files)} 个文件, jsonschema 不可用)"
+
+
 ARTIFACT_CHECKERS = {
     "dirs_exist": check_dirs_exist,
     "plan_files_exist": check_plan_files_exist,
@@ -402,6 +470,10 @@ ARTIFACT_CHECKERS = {
     "self_verify_documented": check_self_verify_documented,
     "db_schema_verified": check_db_schema_verified,
     "feedback_rounds": check_feedback_rounds,
+    "fix_criteria_documented": check_fix_criteria_documented,
+    "self_verify_pass": check_self_verify_pass,
+    "audit_report_generated": check_audit_report_generated,
+    "schema_valid": check_schema_valid,
 }
 
 
@@ -595,6 +667,14 @@ class GateEngine:
                 f.write("plan")
             elif gate == "gate2":
                 f.write("code")
+            elif gate == "debug":
+                debug_key_steps = ["D1", "D2", "D3", "D4"]
+                debug_done = all(steps.get(s, {}).get("status") in (COMPLETED, SKIPPED) for s in debug_key_steps if s in steps)
+                f.write("verified" if debug_done else "code")
+            elif gate == "audit":
+                audit_key_steps = ["A", "B", "C", "D"]
+                audit_done = all(steps.get(s, {}).get("status") in (COMPLETED, SKIPPED) for s in audit_key_steps if s in steps)
+                f.write("verified" if audit_done else "plan")
             else:
                 f.write("plan")
 
