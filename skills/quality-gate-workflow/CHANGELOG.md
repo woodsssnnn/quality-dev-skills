@@ -2,6 +2,32 @@
 
 All notable changes to quality-gate-workflow will be documented in this file.
 
+## [0.7.1.0] - 2026-06-18
+
+### Added - Prompt 瘦身 + Phase 2/3 深度集成
+- **Prompt 瘦身**（-312 行）：删除三处重复日志格式、抽离通用工作协议到 `general-protocols.md`、精简 --lite/P1-check/P4/S4/S5 章节
+- **Gate 1 Guard 补全**：P2 `plan_scope_declared`、P3 `plan_coverage`、P4 `verifier_report_written`
+- **Gate 2 Guard 补全**：S2.5 `boundary_valid`（git diff vs Plan Scope）、S3 `self_verify_documented`、S3.5 `db_schema_verified`、S5 增强 `plan_updated`
+- **Resume 完善**：5 问题重启测试 + artifact 重验证 + RUNNING 步骤自动恢复 + 状态修复建议
+- **Skip 矩阵完善**：--bug（`bug_clarity`→SKIP P1.7、`fix_lines`≤10→SKIP P2.5）、--opt（`no_prd_change`→SKIP P1.7）、S3 `has_sql`→SKIP S3.5
+- **Checkpoint 格式统一**：新增 `gate`/`mode`/`step_order`/`feedback_rounds`/`meta` 字段
+- **反馈回路硬执行**：`complete()` 也检查 feedback_rounds、CODE 根因独立计数（≤2 轮约束）
+- **Boundary Check 集成**：`check_boundary_valid()` 读 git diff vs Plan Scope glob + forbidden 检测
+- **Schema 验证**：`check_schema_valid()` 有 jsonschema 时完整验证，无时降级基本校验
+- **self-check 子命令**：从引擎状态构建步骤覆盖矩阵、checkpoint 完整性、toolCallId 存在性
+- **verify-checkpoint.sh Check 8**：引擎状态与验收数据一致性（S5/P5↔item、S4/P4↔verifierReports、feedback_rounds）
+- **Debug/Audit Guard**：D1 `fix_criteria_documented`、D3 `self_verify_pass`、Audit D `audit_report_generated`
+- **health-check.sh 完善**：Checkpoint 完整性检查 + gate-enforcer.py 语法检查
+- **Debug/Audit .gate-state 多模式支持**
+
+### Changed
+- 反模式规则 58 → 58 条（无变化）
+- gate1-workflow.md: 1146 → 939 行（-18%）
+- gate2-workflow.md: 757 → 677 行（-11%）
+- 新建 general-protocols.md（通用工作协议）
+
+---
+
 ## [0.7.0.0] - 2026-06-18
 
 ### Added - 确定性执行引擎（Gate Enforcer）

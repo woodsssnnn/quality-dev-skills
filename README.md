@@ -89,3 +89,29 @@ cd ~/quality-dev-skills
 git pull
 bash scripts/install.sh --update
 ```
+
+## 致谢
+
+本项目的设计与实现借鉴了以下开源项目的理念与实践，在此向所有贡献者致以诚挚的感谢：
+
+| 项目 | 借鉴内容 | 本项目中的应用 |
+|------|---------|---------------|
+| **[planning-with-files](https://github.com/nicepkg/planning-with-files)** | 5问题重启测试、2-Action Rule、3-Strike Error Protocol | 通用工作协议（`general-protocols.md`）、会话恢复机制 |
+| **[Spec Kit](https://github.com/nicepkg/spec-kit)** | `/speckit.clarify` 结构化澄清、`/speckit.analyze` 交叉分析 | 需求澄清机制（多选题模式）、`--analyze` 跨 artifact 分析 |
+| **[agent-spec](https://github.com/nicepkg/agent-spec)** | boundary enforcement、`stamp` 命令 | Gate 2 Step 2.5 变更范围检查、Git Trailer 可追溯性 |
+| **[Autonoma](https://github.com/nicepkg/autonoma)** | agentic testing（静态+动态双层验证） | Gate 2 S4 静态验证 + S4.5 E2E 行为验证 |
+| **[Ponytail](https://github.com/nicepkg/ponytail)** | YAGNI 检查清单 | PM 顾问 D6 维度：功能必要性、标准库替代、原生特性替代 |
+| **[OpenSpec](https://github.com/nicepkg/openspec)** | delta specs（只描述变更部分） | `--incremental` 增量验证模式 |
+| **[Python](https://www.python.org/)** | Python 3 标准库 | gate-enforcer.py、evaluate.py、verify-checkpoint.sh 的 JSON 解析与状态机实现 |
+| **[JSON Schema](https://json-schema.org/)** | JSON Schema Draft-07 | acceptance-criteria-schema.json 验收清单格式规范 |
+
+### 平台兼容致谢
+
+本项目的多平台支持得益于以下平台的开放生态：
+
+- **[Claude Code](https://claude.ai/)** (Anthropic) — Hooks 机制、SKILL.md 规范
+- **[Codex](https://openai.com/)** (OpenAI) — 服务器插件架构
+- **[OpenCode](https://github.com/opencode)** — 服务器插件接口
+- **[MiMoCode](https://mimo.org/)** — 插件安装规范
+
+> 本项目的核心理念：将社区最佳实践沉淀为可复用的 AI 技能，让每个开发者都能站在巨人的肩膀上。

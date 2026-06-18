@@ -94,6 +94,32 @@ git pull
 bash scripts/install.sh --update
 ```
 
+## Acknowledgments
+
+This project's design and implementation draw from the ideas and practices of the following open source projects. We extend our sincere gratitude to all contributors:
+
+| Project | Borrowed Concepts | Applied In |
+|---------|------------------|------------|
+| **[planning-with-files](https://github.com/nicepkg/planning-with-files)** | 5-Question Restart Test, 2-Action Rule, 3-Strike Error Protocol | General Protocols (`general-protocols.md`), session recovery |
+| **[Spec Kit](https://github.com/nicepkg/spec-kit)** | `/speckit.clarify` structured clarification, `/speckit.analyze` cross-analysis | Requirements clarification (multi-choice mode), `--analyze` cross-artifact analysis |
+| **[agent-spec](https://github.com/nicepkg/agent-spec)** | Boundary enforcement, `stamp` command | Gate 2 Step 2.5 scope checking, Git Trailer traceability |
+| **[Autonoma](https://github.com/nicepkg/autonoma)** | Agentic testing (static + dynamic dual-layer verification) | Gate 2 S4 static verification + S4.5 E2E behavior verification |
+| **[Ponytail](https://github.com/nicepkg/ponytail)** | YAGNI checklist | PM Advisor D6 dimension: feature necessity, stdlib alternatives, native feature alternatives |
+| **[OpenSpec](https://github.com/nicepkg/openspec)** | Delta specs (describe only changes) | `--incremental` incremental verification mode |
+| **[Python](https://www.python.org/)** | Python 3 standard library | gate-enforcer.py, evaluate.py, verify-checkpoint.sh JSON parsing & state machine |
+| **[JSON Schema](https://json-schema.org/)** | JSON Schema Draft-07 | acceptance-criteria-schema.json acceptance criteria format |
+
+### Platform Ecosystem Acknowledgments
+
+Multi-platform support is made possible by the open ecosystems of:
+
+- **[Claude Code](https://claude.ai/)** (Anthropic) — Hooks mechanism, SKILL.md specification
+- **[Codex](https://openai.com/)** (OpenAI) — Server plugin architecture
+- **[OpenCode](https://github.com/opencode)** — Server plugin interface
+- **[MiMoCode](https://mimo.org/)** — Plugin installation specification
+
+> Core philosophy: distill community best practices into reusable AI skills, so every developer can stand on the shoulders of giants.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.

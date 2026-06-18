@@ -1,7 +1,7 @@
 {
   "template": {
     "name": "project-dev-rule-template",
-    "version": "0.7.0.0",
+    "version": "0.7.1.0",
     "description": "项目开发规范技能模板",
     "compatibility": {
       "min_project_version": "0.5.0.0",
@@ -10,15 +10,28 @@
   },
   "skills": {
     "quality-gate-workflow": {
-      "version": "0.7.0.0",
+      "version": "0.7.1.0",
       "description": "质量门禁工作流"
     },
     "skill-optimizer": {
-      "version": "0.7.0.0",
+      "version": "0.7.1.0",
       "description": "技能自动优化框架"
     }
   },
   "changelog": [
+    {
+      "version": "0.7.1.0",
+      "date": "2026-06-18",
+      "changes": [
+        "Prompt 瘦身（-312行）：删除重复日志格式、抽离通用协议到 general-protocols.md、精简交互模板",
+        "Phase 2 全步骤 Guard 补全：15 个 artifact checker 覆盖 Gate1/Gate2/Debug/Audit",
+        "Phase 3 深度集成：Boundary Check、Schema 验证、反馈回路硬执行、self-check 子命令",
+        "verify-checkpoint.sh Check 8：引擎状态与验收数据一致性检查",
+        "Resume 完善：5 问题重启测试 + artifact 重验证 + RUNNING 步骤自动恢复",
+        "Skip 矩阵完善：--bug/--opt 模式 + 内容驱动 skip",
+        "README 新增开源致谢章节"
+      ]
+    },
     {
       "version": "0.7.0.0",
       "date": "2026-06-18",

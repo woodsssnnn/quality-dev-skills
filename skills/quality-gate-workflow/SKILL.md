@@ -15,7 +15,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(git log *)
 metadata:
-  version: 0.7.0.0
+  version: 0.7.1.0
 ---
 
 # 质量门禁工作流
