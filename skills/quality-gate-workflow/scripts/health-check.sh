@@ -321,6 +321,28 @@ except Exception as e:
             echo "     会话: $e_session ($e_gate)"
             echo "     状态: $e_status | 当前步骤: $e_current | 进度: $e_progress"
             PASS=$((PASS+1))
+
+            # Checkpoint 完整性检查
+            if [ -d "docs/.qgw-checkpoints" ]; then
+                cp_count=$(ls docs/.qgw-checkpoints/*.json 2>/dev/null | wc -l | tr -d ' ')
+                e_completed=$(echo "$e_progress" | cut -d'/' -f1)
+                if [ "$cp_count" -lt "$e_completed" ] 2>/dev/null; then
+                    echo "  ⚠️  Checkpoint 不完整: $cp_count 个文件 vs $e_completed 个已完成步骤"
+                    WARN=$((WARN+1))
+                else
+                    echo "  ✅ Checkpoint 完整: $cp_count 个文件"
+                fi
+            fi
+
+            # gate-enforcer.py 语法检查
+            if [ -f "$SKILL_DIR/scripts/gate-enforcer.py" ]; then
+                if "$PYTHON" -c "import py_compile; py_compile.compile(r'$SKILL_DIR/scripts/gate-enforcer.py', doraise=True)" 2>/dev/null; then
+                    echo "  ✅ gate-enforcer.py 语法有效"
+                else
+                    echo "  ❌ gate-enforcer.py 语法错误"
+                    FAIL=$((FAIL+1))
+                fi
+            fi
         fi
     else
         echo "  ℹ️  引擎状态文件存在（无 Python，跳过详细检查）"
