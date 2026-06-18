@@ -76,6 +76,46 @@
 2. 更新 `CHANGELOG.md`
 3. 创建 Git Tag：`git tag v1.2.0`
 
+## 提交新技能
+
+### 目录结构要求
+
+新技能必须基于 `shared/skill-template/SKILL.md.template` 模板创建，目录结构如下：
+
+```
+skills/your-skill-name/
+├── SKILL.md              ← 主入口（必需，包含 YAML frontmatter）
+├── manifest-entry.json   ← 技能清单项（必需，声明 inputs/outputs/triggers）
+├── references/           ← 参考文档（可选）
+├── scripts/              ← 检查脚本（可选，stdlib only）
+└── evaluations/          ← 评估场景（必需，≥3 个）
+```
+
+### manifest 注册步骤
+
+1. 在技能目录创建 `manifest-entry.json`，声明 category / triggers / inputs / outputs
+2. 运行 `python scripts/generate-manifest.py` 重新生成根目录 `skill-manifest.json`
+3. 运行 `python scripts/generate-manifest.py --validate` 确认一致
+
+### 评估场景最低要求
+
+- 至少 3 个评估场景文件（`evaluations/scenario-N-*.md`）
+- 覆盖：正常路径、边界情况、错误处理各至少一个场景
+- 每个场景包含：触发条件、输入、期望行为、验证标准
+
+### CI 通过标准
+
+- `evaluate.py` 评分 ≥ B 级
+- `generate-manifest.py --validate` 无错误
+- 所有 Python 脚本通过 `py_compile` 语法检查
+- Shell 脚本通过 ShellCheck
+
+### stdlib only 原则
+
+- 所有 Python 脚本**只能使用标准库**（`json`, `re`, `os`, `sys`, `pathlib`, `argparse` 等）
+- 禁止 `pip install` 或 `import` 第三方包
+- 这确保技能在任何 Python ≥ 3.8 环境即开即用
+
 ## 许可
 
 贡献的代码将以 MIT License 发布。提交 PR 即表示你同意将贡献以 MIT License 授权。

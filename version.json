@@ -1,7 +1,7 @@
 {
   "template": {
     "name": "project-dev-rule-template",
-    "version": "0.7.1.0",
+    "version": "0.8.0.0",
     "description": "项目开发规范技能模板",
     "compatibility": {
       "min_project_version": "0.5.0.0",
@@ -10,15 +10,48 @@
   },
   "skills": {
     "quality-gate-workflow": {
-      "version": "0.7.1.0",
+      "version": "0.8.0.0",
       "description": "质量门禁工作流"
     },
     "skill-optimizer": {
-      "version": "0.7.1.0",
+      "version": "0.8.0.0",
       "description": "技能自动优化框架"
+    },
+    "qgw-init": {
+      "version": "0.8.0.0",
+      "description": "项目初始化引导技能"
+    },
+    "api-design-review": {
+      "version": "0.8.0.0",
+      "description": "API 设计审查门禁"
+    },
+    "db-migration-gate": {
+      "version": "0.8.0.0",
+      "description": "数据库迁移质量门禁"
     }
   },
   "changelog": [
+    {
+      "version": "0.8.0.0",
+      "date": "2026-06-18",
+      "changes": [
+        "PRD 变更正向触发：新增 --prd-changed 参数 + 三级影响分级（cosmetic/minor/major）",
+        "Plan 微调机制：新增 --plan-tweak 参数，Gate 2 执行中轻量微调 Plan",
+        "gate-enforcer.py 新增 prd-changed / plan-tweak 两个子命令",
+        "SKILL.md 按 Phase 拆分 + 路由分发：362行→252行，降低 ~31% token 消耗",
+        "新建 5 个 reference 文件（smart-inference/full-parameters/progress-format/error-output-format/knowledge-compounding）",
+        "新建 plan-tweak-workflow.md（TW1-TW4 完整流程）",
+        "prd-revision-workflow.md 嵌入正向触发入口 + 影响分级逻辑",
+        "change-propagation.md 新增 Plan 微调传播子条款",
+        "反模式规则 58 → 60 条（#59 PRD 变更不声明影响级别、#60 Plan 微调修改可验证项）",
+        "新增 qgw-init 技能：7 步交互式引导 + qgw-init.sh 非交互式脚本",
+        "新增集成测试框架：pytest ~103 用例覆盖 gate-enforcer.py 全部子命令",
+        "新增技能清单 manifest：skill-manifest-schema.json + generate-manifest.py + skill-protocol.md",
+        "新增垂直领域技能包框架：api-design-review + db-migration-gate",
+        "CI/CD 增强：quality-check.yml 新增 4 个 job + release.yml 发布自动化 + qgw-pr-check.yml",
+        "CONTRIBUTING.md 新增“提交新技能”章节 + 审核标准"
+      ]
+    },
     {
       "version": "0.7.1.0",
       "date": "2026-06-18",

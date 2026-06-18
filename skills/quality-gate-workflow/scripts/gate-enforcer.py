@@ -13,6 +13,8 @@ LLM 只做语义工作（理解需求、写 Plan、判断质量），引擎强�
     python gate-enforcer.py fail <step> --reason <text> [--rootCause CODE|PLAN]
     python gate-enforcer.py status [--step <step>]
     python gate-enforcer.py resume
+    python gate-enforcer.py prd-changed --impact cosmetic|minor|major [--scope §X.X]
+    python gate-enforcer.py plan-tweak --reason <text> --scope <ch-X.X>
 
 环境变量:
     QGW_ENGINE_ENABLED=true|false  — 启用/禁用引擎（默认 true）
@@ -119,6 +121,26 @@ TOOLCALL_REQUIRED_STEPS = {"P4", "S4", "P1.7", "P2.5", "D4", "C"}
 
 # 反馈回路相关步骤
 FEEDBACK_STEPS = {"P4", "S4"}
+
+# ===== PRD 变更影响级别处理规则 =====
+
+PRD_CHANGE_RULES = {
+    "cosmetic": {
+        "reset_steps": [],            # 不重置任何步骤
+        "mark_needs_review": True,    # 标记 Plan 受影响章节
+        "rerun_gate": False,          # 不重跑 Gate
+    },
+    "minor": {
+        "reset_steps": ["S4"],        # 重置 verifier 步骤
+        "mark_needs_review": True,
+        "rerun_gate": "incremental",  # 增量重验
+    },
+    "major": {
+        "reset_steps": ["S1", "S2", "S2.5", "S3", "S3.5", "S4", "S4.5", "S5"],
+        "mark_needs_review": True,
+        "rerun_gate": "full",         # 全量重跑 Gate 1
+    },
+}
 
 # 回退目标映射
 ROLLBACK_TARGETS = {
@@ -1253,6 +1275,124 @@ class GateEngine:
             progress_pct=round((completed_count + skipped_count) / total * 100, 1) if total > 0 else 0,
         )
 
+    # ===== PRD-CHANGED =====
+
+    def prd_changed(self, impact, scope=None):
+        """声明 PRD 有变更，按影响分级处理下游"""
+        if not self._ensure_state():
+            return output_block("引擎未初始化")
+
+        if impact not in PRD_CHANGE_RULES:
+            return output_block(f"无效的影响级别: {impact}（有效值: cosmetic, minor, major）")
+
+        gate = self.state.get("gate", "")
+        session_status = self.state.get("status", "")
+
+        # 如果没有活跃的 Gate 2 会话，建议走 RV1-RV5 完整流程
+        if gate != "gate2" or session_status not in ("INITIALIZED", "IN_PROGRESS"):
+            return output_ok(
+                f"PRD 变更已记录（影响级别: {impact}）。"
+                f"当前无活跃的 Gate 2 会话，建议走 RV1-RV5 完整修订流程",
+                impact=impact,
+                scope=scope,
+                suggestion="RV1-RV5"
+            )
+
+        rules = PRD_CHANGE_RULES[impact]
+
+        # 初始化 prd_change 字段（可选，向后兼容）
+        if "prd_change" not in self.state:
+            self.state["prd_change"] = []
+
+        change_record = {
+            "impact": impact,
+            "scope": scope,
+            "timestamp": now_iso(),
+            "reset_steps": rules["reset_steps"],
+        }
+        self.state["prd_change"].append(change_record)
+
+        # 按影响级别重置步骤
+        steps = self.state.get("steps", {})
+        reset_done = []
+        for s in rules["reset_steps"]:
+            if s in steps and steps[s]["status"] in (COMPLETED, RUNNING):
+                steps[s]["status"] = NOT_STARTED
+                steps[s]["started_at"] = None
+                steps[s]["completed_at"] = None
+                reset_done.append(s)
+
+        # 构建输出信息
+        summary_lines = [f"PRD 变更已记录（{impact}）"]
+        if scope:
+            summary_lines.append(f"变更范围: {scope}")
+        if reset_done:
+            summary_lines.append(f"已重置步骤: {', '.join(reset_done)}")
+        if rules["rerun_gate"] == "full":
+            summary_lines.append("建议: 全量重跑 Gate 1（RV1-RV5 完整流程）")
+        elif rules["rerun_gate"] == "incremental":
+            summary_lines.append("建议: 增量重验受影响的可验证项")
+        else:
+            summary_lines.append("建议: 标记 Plan 受影响章节为 NEEDS_REVIEW")
+
+        self._save_state()
+
+        return output_ok(
+            " | ".join(summary_lines),
+            impact=impact,
+            scope=scope,
+            reset_steps=reset_done,
+            rerun_gate=rules["rerun_gate"],
+        )
+
+    # ===== PLAN-TWEAK =====
+
+    def plan_tweak(self, reason, scope=None):
+        """Gate 2 执行中对 Plan 做轻量微调"""
+        if not self._ensure_state():
+            return output_block("引擎未初始化")
+
+        gate = self.state.get("gate", "")
+        if gate != "gate2":
+            return output_block(f"Plan 微调仅适用于 Gate 2（当前: {gate}）")
+
+        steps = self.state.get("steps", {})
+        current = self.state.get("current_step")
+
+        # 验证当前在 S1-S3 之间（S4 verifier 之前）
+        allowed_steps = {"S1", "S2", "S2.5", "S3"}
+        if current and current not in allowed_steps:
+            # 也检查是否有步骤在 S4 之后已完成
+            s4_state = steps.get("S4", {})
+            if s4_state.get("status") in (COMPLETED, RUNNING):
+                return output_block(
+                    "Plan 微调不允许在 S4 (verifier) 之后执行。"
+                    "如需修改可验证项定义，请使用 --prd-changed"
+                )
+
+        # 初始化 plan_tweaks 字段（可选，向后兼容）
+        if "plan_tweaks" not in self.state:
+            self.state["plan_tweaks"] = []
+
+        tweak_record = {
+            "reason": reason,
+            "scope": scope,
+            "timestamp": now_iso(),
+            "current_step": current,
+        }
+        self.state["plan_tweaks"].append(tweak_record)
+
+        self._save_state()
+
+        tweak_count = len(self.state["plan_tweaks"])
+        return output_ok(
+            f"Plan 微调已记录（第 {tweak_count} 次）。"
+            f"原因: {reason}" + (f" | 范围: {scope}" if scope else ""),
+            tweak_count=tweak_count,
+            reason=reason,
+            scope=scope,
+        )
+
     # ===== 辅助方法 =====
 
     def _suggest_anti_pattern(self, step, prereq):
@@ -1319,6 +1459,18 @@ def main():
     # self-check
     subparsers.add_parser("self-check", help="自检：从引擎状态构建步骤覆盖矩阵")
 
+    # prd-changed
+    p_prd = subparsers.add_parser("prd-changed", help="声明 PRD 有变更，按影响分级处理")
+    p_prd.add_argument("--impact", required=True, choices=["cosmetic", "minor", "major"],
+                       help="影响级别")
+    p_prd.add_argument("--scope", default=None,
+                       help="变更范围（如 §2.3）")
+
+    # plan-tweak
+    p_tweak = subparsers.add_parser("plan-tweak", help="Gate 2 执行中对 Plan 做轻量微调")
+    p_tweak.add_argument("--reason", required=True, help="微调原因")
+    p_tweak.add_argument("--scope", default=None, help="微调范围（如 ch-2.3）")
+
     args = parser.parse_args()
 
     if not args.action:
@@ -1368,6 +1520,12 @@ def main():
 
     elif args.action == "self-check":
         rc = engine.self_check()
+
+    elif args.action == "prd-changed":
+        rc = engine.prd_changed(args.impact, scope=args.scope)
+
+    elif args.action == "plan-tweak":
+        rc = engine.plan_tweak(args.reason, scope=args.scope)
 
     else:
         parser.print_help()

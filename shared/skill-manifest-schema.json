@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QGW Skill Manifest Schema",
+  "description": "定义 quality-dev-skills 技能清单中每个技能的元数据结构",
+  "type": "object",
+  "required": ["generated_at", "generator_version", "skills"],
+  "properties": {
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "manifest 生成时间（ISO 8601）"
+    },
+    "generator_version": {
+      "type": "string",
+      "description": "生成脚本的版本号"
+    },
+    "skills": {
+      "type": "array",
+      "description": "已注册技能列表",
+      "items": {
+        "type": "object",
+        "required": ["id", "version", "path", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]+$",
+            "description": "技能唯一标识符，与目录名一致"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+(\\.\\d+)?$",
+            "description": "4 级版本号 Major.Minor.Patch.Iteration"
+          },
+          "path": {
+            "type": "string",
+            "description": "相对于仓库根目录的技能路径"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "description": "一句话描述技能用途"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["quality-assurance", "optimization", "initialization", "vertical"],
+            "description": "技能分类"
+          },
+          "triggers": {
+            "type": "object",
+            "description": "触发条件声明",
+            "properties": {
+              "parameters": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "命令行参数触发，如 --gate1"
+              },
+              "keywords": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "关键词触发"
+              }
+            }
+          },
+          "inputs": {
+            "type": "object",
+            "description": "技能输入声明",
+            "properties": {
+              "required": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "必需输入（文件路径、参数等）"
+              },
+              "optional": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "可选输入"
+              }
+            }
+          },
+          "outputs": {
+            "type": "object",
+            "description": "技能输出声明",
+            "properties": {
+              "artifacts": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "生成的文件产物路径模式"
+              },
+              "side_effects": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "副作用描述（状态文件变更等）"
+              }
+            }
+          },
+          "dependencies": {
+            "type": "object",
+            "description": "运行时依赖声明",
+            "properties": {
+              "runtime": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "运行时环境要求，如 python>=3.8"
+              },
+              "skills": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "依赖的其他技能 id"
+              },
+              "tools": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "需要的 Agent 工具（Read/Bash 等）"
+              }
+            }
+          },
+          "compatibility": {
+            "type": "object",
+            "description": "兼容性约束",
+            "properties": {
+              "min_version": {
+                "type": "string",
+                "description": "所需最低 quality-dev-skills 版本"
+              },
+              "platforms": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "支持的平台列表"
+              }
+            }
+          },
+          "integration_points": {
+            "type": "object",
+            "description": "技能间集成点声明",
+            "properties": {
+              "extends": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "本技能扩展的技能 id"
+              },
+              "extended_by": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "扩展本技能的技能 id"
+              },
+              "shares_artifacts_with": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "共享产物路径的技能 id"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

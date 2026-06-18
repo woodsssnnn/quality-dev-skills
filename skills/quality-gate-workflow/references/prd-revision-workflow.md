@@ -4,13 +4,32 @@
 
 ## 触发条件
 
+### 被动触发（自动检测）
+
 | 触发场景 | 检测方式 |
-|---------|---------|
+|---------|--------|
 | Gate 2 S4 verifier 发现 PRD 描述与实际业务不符 | verifier 报告 PRD-ERROR |
 | 用户主动更新 PRD 目录中的文件 | P0/S0 PRD diff 检测（对比 revision-log.md） |
 | PM 顾问 P1.7 发现 PRD 自相矛盾 | PM ISSUE (D1/D3) |
 | `--analyze` AC1 发现 PRD→Plan MISSING | 分析报告 |
 | Bug 修复过程中发现需求遗漏 | S4 Bug Log 分析 |
+
+### 正向触发（用户主动声明）
+
+用户在 Gate 2 执行中主动声明 PRD 有变更时，使用 `--prd-changed` 参数：
+
+```
+python gate-enforcer.py prd-changed --impact cosmetic|minor|major [--scope §X.X]
+```
+
+| 参数 | 说明 |
+|------|------|
+| `--impact cosmetic` | 纯表述修正（错别字/格式），不影响功能规格 |
+| `--impact minor` | 功能规格微调，影响 ≤2 章节且 ≤5 可验证项 |
+| `--impact major` | 结构性变更（新增/删除章节、业务逻辑大改） |
+| `--scope §X.X` | 可选，声明具体变更的 PRD 章节 |
+
+正向触发后引擎自动按影响级别处理下游（详见下方 RV5 正向触发路径）。
 
 ---
 
@@ -58,6 +77,16 @@
 输出：docs/reports/prd-impact-{date}-{prp-id}.md
 状态：ANALYZED
 ```
+
+### 影响分级逻辑
+
+正向触发时，RV2 嵌入影响分级判断：
+
+| 影响级别 | 判断标准 | 下游处理路径 |
+|---------|---------|------------|
+| **cosmetic** | 仅涉及文字措辞/错别字/格式；不涉及字段名/枚举值/逻辑条件 | 仅标记 Plan 受影响章节为 NEEDS_REVIEW；Verification JSON 不变；不重跑 Gate |
+| **minor** | 涉及 ≤2 个 PRD 章节；影响的 verification item ≤5 个；无新增/删除章节 | Plan 受影响章节重验（增量 Gate 1）；受影响 verification item 重置为 NEEDS_REVIEW |
+| **major** | 新增/删除 PRD 章节；业务逻辑大改；影响 >5 个 verification item | 全量重跑 Gate 1；等同于 RV5 完整流程 |
 
 ### 影响分析步骤
 
@@ -145,7 +174,19 @@
 状态：SYNCED
 ```
 
-### 同步步骤
+### 正向触发路径（按影响级别分支）
+
+当通过 `--prd-changed` 正向触发时，RV5 按影响级别走不同路径：
+
+| 影响级别 | 路径 |
+|---------|------|
+| **cosmetic** | 仅标记 Plan 受影响章节为 NEEDS_REVIEW → 更新 QGW-INDEX → 记录到 Session Summary |
+| **minor** | 标记 Plan + Verification item 为 NEEDS_REVIEW → 增量重验受影响项 → 更新 QGW-INDEX → 记录到 Session Summary |
+| **major** | 全量重置 Gate 2 步骤（S1-S5） → 建议全量重跑 Gate 1 → 更新 QGW-INDEX → 记录到 Session Summary |
+
+引擎通过 `prd-changed` 子命令自动执行步骤重置，代理只需完成文档更新部分。
+
+### 传统同步步骤
 
 1. **标记 Plan**：受影响章节的 unit 状态标记为 `NEEDS_REVIEW`
    - 修改 `docs/plans/{feature}/00-overview.md` 中对应 chapter 的 status

@@ -11,7 +11,7 @@ allowed-tools:
   - Write
   - Edit
 metadata:
-  version: 0.7.1.0
+  version: 0.8.0.0
 ---
 
 # Skill Optimizer

@@ -1,0 +1,33 @@
+{
+  "id": "db-migration-gate",
+  "version": "0.8.0.0",
+  "path": "skills/db-migration-gate",
+  "description": "数据库迁移门禁：检查迁移文件安全性，防止危险 schema 变更进入生产环境",
+  "category": "vertical",
+  "triggers": {
+    "parameters": ["--db-migration"],
+    "keywords": ["migration review", "db migration", "schema change", "alembic", "flyway"]
+  },
+  "inputs": {
+    "required": ["迁移文件目录或文件路径"],
+    "optional": ["--strict"]
+  },
+  "outputs": {
+    "artifacts": [],
+    "side_effects": ["控制台输出检查结果"]
+  },
+  "dependencies": {
+    "runtime": ["python>=3.8"],
+    "skills": ["quality-gate-workflow"],
+    "tools": ["Read", "Bash"]
+  },
+  "compatibility": {
+    "min_version": "0.5.0.0",
+    "platforms": ["claude-code", "codex", "opencode", "minocode", "general"]
+  },
+  "integration_points": {
+    "extends": ["quality-gate-workflow"],
+    "extended_by": [],
+    "shares_artifacts_with": ["quality-gate-workflow"]
+  }
+}

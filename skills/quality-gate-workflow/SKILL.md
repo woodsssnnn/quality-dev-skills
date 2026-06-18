@@ -15,7 +15,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(git log *)
 metadata:
-  version: 0.7.1.0
+  version: 0.8.0.0
 ---
 
 # 质量门禁工作流
@@ -61,24 +61,9 @@ metadata:
 
 ## 智能推断规则（`--auto` 模式）
 
-当用户消息不含显式参数时，QGW 根据输入内容自动推断：
+零参数时自动推断最佳流程。推断结果**必须用户确认后**才执行。
 
-| 输入特征 | 推断结果 | 置信度信号 |
-|---------|----------|------------|
-| 含 PRD/需求文档文本或路径 | `--gate1 --prd` | 出现"需求""PRD""功能描述"等关键词 |
-| 含 Bug 描述/错误日志/堆栈 | `--gate2 --debug`（无 Plan）或 `--gate1 --bug`（需 Plan） | 出现"错误""Bug""异常""500"等关键词 |
-| 含已有 Plan 文件路径 | `--gate2 --impl` | 路径指向 plan/ 目录下的 .md 文件 |
-| 含"重构""优化""改进" | `--gate1 --opt` | 语义匹配 |
-| `.qgw/sessions/` 有活跃记录 | 提示恢复上次会话 | 检测到未完成 session |
-| 含"审计""检查已有代码" | `--gate2 --audit` | 语义匹配 |
-
-**推断流程**：
-1. 分析用户输入，匹配上表规则
-2. 输出建议：`💡 建议参数：--gate1 --prd（原因：检测到需求文档内容）`
-3. 等待用户确认或调整
-4. 确认后按推断参数执行
-
-> 多个规则匹配时，列出所有候选让用户选择。无法匹配时展示 [first-run-guide](references/first-run-guide.md) 引导。
+详细规则 → [references/smart-inference.md](references/smart-inference.md)
 
 ---
 
@@ -102,8 +87,10 @@ metadata:
 | `--lite` | 轻量快速通道（跳过 P1.5/P1.6/P1.7） | gate1, all |
 | `--incremental` | 增量验证（只验证变更影响的 item） | gate2, all |
 | `--e2e` | E2E 行为验证（运行项目测试套件） | gate2, all |
+| `--prd-changed` | 声明 PRD 有变更（影响级别: cosmetic/minor/major） | gate2 |
+| `--plan-tweak` | Gate 2 执行中对 Plan 做轻量微调（不改可验证项） | gate2 |
 
-> 完整参数表（含二级模式、`--self` 子参数等）→ 下方"全部参数"章节
+> 完整参数表（含二级模式、`--self` 子参数等）→ [references/full-parameters.md](references/full-parameters.md)
 
 ## 核心机制
 
@@ -167,109 +154,11 @@ P1 → P1.5(DB) → P1.6(代码链路) → P1.7(PM 顾问) → P2 → P2.5(架�
 
 ## 全部参数
 
-### 二级参数：模式（可选）
-
-| 参数 | 含义 | 适用 |
-|------|------|------|
-| `--prd` | PRD 需求转 Plan（Gate 1 默认） | gate1, all |
-| `--bug` | Bug 分析+修复计划 | gate1, all |
-| `--opt` | 重构/优化规划 | gate1, all |
-| `--impl` | 按 Plan 实现（Gate 2 默认） | gate2, all |
-| `--audit` | 审计已有代码偏差 | gate2 |
-| `--debug` | 无 Plan 的 bug 修复 | gate2 |
-
-### 三级参数：修饰（可选，叠加）
-
-| 参数 | 含义 | 适用 |
-|------|------|------|
-| `--strict` | 零偏差通过，否则阻断 | 任意 |
-| `--fix` | 审计后自动修正偏差 | gate2 --audit |
-| `--lite` | 轻量快速通道（跳过 P1.5/P1.6/P1.7） | gate1, all |
-| `--incremental` | 增量验证（只验证变更影响的 item） | gate2, all |
-| `--e2e` | E2E 行为验证（运行项目测试套件） | gate2, all |
-
-**`--lite` 轻量快速通道**：适用于单文件/单函数改动、纯前端无 DB 变更、bug fix 改动 ≤3 处。流程简化为 P1→P2→P4→P5，跳过 P1.5（DB 调查）、P1.6（代码链路调查）、P1.7（PM 顾问）。
-
-跳过 Gate 1 只能由用户决定（使用 `--gate2` 而非 `--all`），代理无权跳过。
-
-### `--self` 自检模式
-
-| 参数 | 含义 |
-|------|------|
-| `--self` | 复盘最近的 QGW 会话 |
-| `--self <session-id>` | 复盘指定会话 |
-| `--self <keyword>` | 按名称关键词定位会话 |
-
-`--self` 检查步骤完整性、Verifier 执行、文件产物、Plan 质量。输出质量报告，不修改任何文件。
-
-`--strict` 适用：任何高严重性问题 → FAIL。
-
-**详细步骤** → [references/self-check-workflow.md](references/self-check-workflow.md)
-
-**示例**：`"自检 --self"` / `"复盘上个会话 --self 0610-tcl"` / `"严格自检 --self --strict"`
-
-**Gate 1/2 详细步骤** → [references/gate1-workflow.md](references/gate1-workflow.md) | [references/gate2-workflow.md](references/gate2-workflow.md)
-
-**示例**：`"实现SP1 --gate2"` / `"审计报表 --gate2 --audit --fix"` / `"全流程 --all --strict"` / `"快速修复 --preset quickfix"`
+完整参数表、参数组合矩阵和互斥规则 → [references/full-parameters.md](references/full-parameters.md)
 
 ## 进度输出
 
-**统一格式**：所有步骤必须使用结构化日志格式：
-
-```
-[qgw][{timestamp}][{platform}:{session_id}][{gate}][{step}/{total}] {status} {message}
-```
-
-| 字段 | 说明 | 示例 |
-|------|------|------|
-| `[qgw]` | 固定前缀 | `[qgw]` |
-| `{timestamp}` | ISO时间戳 | `2026-06-17T20:45:00` |
-| `{platform}` | 平台标识 | `mimo` / `claude` / `codex` / `opencode` |
-| `{session_id}` | 完整会话ID | `ses_12ca2c1c4ffe0S3HguaG7fosHN` |
-| `{gate}` | 阶段 | `gate1` / `gate2` / `analyze` |
-| `{step}/{total}` | 步骤进度 | `P1/5` / `S3/5` |
-| `{status}` | 状态图标 | ✅ / ❌ / ⚠️ / 🔄 / → |
-| `{message}` | 消息内容 | `解析需求完成: 99项可验证项` |
-
-**平台标识**：
-
-| 平台 | 标识 | 会话存储位置 | 类型 |
-|------|------|--------------|------|
-| MiMoCode | `mimo` | `~/.local/share/mimocode/memory/sessions/` | 国内 |
-| 通义灵码 | `tongyi` | `~/.local/share/tongyi/sessions/` | 国内 |
-| 豆包MarsCode | `marscode` | `~/.local/share/marscode/sessions/` | 国内 |
-| 百度Comate | `comate` | `~/.local/share/comate/sessions/` | 国内 |
-| CodeGeeX | `codegeex` | `~/.local/share/codegeex/sessions/` | 国内 |
-| Cursor | `cursor` | `~/.cursor/sessions/` | 国际 |
-| Claude Code | `claude` | `~/.claude/projects/{project-slug}/` | 国际 |
-| Codex | `codex` | `~/.codex/sessions/{year}/` | 国际 |
-| OpenCode | `opencode` | `~/.opencode/sessions/` | 国际 |
-
-**状态图标**：
-- ✅ 步骤完成
-- ❌ 步骤失败
-- ⚠️ 警告/发现ISSUE
-- 🔄 步骤进行中
-- → 步骤开始/转移
-
-**统计汇总**：
-```
-[qgw][{timestamp}][{platform}:{session_id}][{gate}][STATS] 📊 总耗时: {time} | 步骤: {done}/{total} | 通过率: {rate}%
-```
-
-**复盘路径**：
-```bash
-# MiMoCode会话
-cat ~/.local/share/mimocode/memory/sessions/{session_id}/checkpoint.md
-
-# Claude Code会话
-cat ~/.claude/projects/{project-slug}/conversations/{session-id}.json
-
-# Codex会话
-cat ~/.codex/sessions/2026/{session-id}/history.json
-```
-
-示例见 [references/gate1-workflow.md](references/gate1-workflow.md) 和 [references/gate2-workflow.md](references/gate2-workflow.md)。
+所有步骤必须使用 `[qgw]` 结构化日志格式。详细格式、平台标识、状态图标 → [references/progress-format.md](references/progress-format.md)
 
 ## 红线 - 停下来重新开始
 
@@ -288,18 +177,11 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 
 ## 常见错误与禁止行为
 
-完整 58 条规则见 [references/anti-patterns.md](references/anti-patterns.md)。最常违规的：跳过 verifier（#1/#2）、验收标准模糊（#5）、需求猜测（#6）、凭记忆提取（#8）、over-fixing（#20）、顾问静默跳过（#25）、`--lite` 滥用（#26）、顾问自演（#27）。新增：PRD 无版本化修订（#49）、文档变更无下游传播（#54）、PRD 非目录格式（#57）、绕过 gate-enforcer（#58）。
+完整 60 条规则见 [references/anti-patterns.md](references/anti-patterns.md)。最常违规的：跳过 verifier（#1/#2）、验收标准模糊（#5）、需求猜测（#6）、凭记忆提取（#8）、over-fixing（#20）、顾问静默跳过（#25）、`--lite` 滥用（#26）、顾问自演（#27）。PRD 无版本化修订（#49）、文档变更无下游传播（#54）、PRD 非目录格式（#57）、绕过 gate-enforcer（#58）、PRD 变更不声明影响级别（#59）、Plan 微调修改可验证项（#60）。
 
 ## Knowledge Compounding（自进化）
 
-每个 Unit 完成后执行 evolve 检查（无 FAIL 也确认"无新增 pattern"）。
-
-| 层级 | 位置 | 写入规则 |
-|------|------|---------|
-| **工作空间层** | `docs/verification/error-patterns.json` | verifier 发现新 FAIL/PARTIAL 模式后自动提取 |
-| **全局层** | `references/error-patterns.json` | 仅人工 promote（≥3 工作空间 + 用户确认） |
-
-工作空间层模式累计达阈值时（3/5/8），升级到项目 `dev_rule_path` / `gate_dev_rules` / Red Lines / 合理化借口表。
+每个 Unit 完成后执行 evolve 检查。详细机制 → [references/knowledge-compounding.md](references/knowledge-compounding.md)
 
 ## 项目配置
 
@@ -315,22 +197,25 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 
 ## 错误输出格式
 
-当检测到反模式时，使用人类可读的错误输出：
+检测到反模式时使用人类可读格式输出。详细格式和示例 → [references/error-output-format.md](references/error-output-format.md)
 
-```
-❌ 操作被阻止：[人类可读的描述]
-   原因：[为什么这违反了工作流]
-   建议：[用户应该怎么做]
-   参考：反模式 #N（详细信息见 anti-patterns.md）
-```
+## 路由分发
 
-示例：
-```
-❌ 操作被阻止：验收标准描述模糊，无法验证
-   原因："有筛选功能"不够具体，验收标准要求可验证（反模式 #5）
-   建议：改为"筛选器=流程树多选，支持按节点类型过滤 (§6.1.1)"
-   参考：反模式 #5（详细信息见 anti-patterns.md）
-```
+根据参数加载对应的 reference 文件（必须加载）：
+
+| 参数/场景 | 加载文件 | 时机 |
+|----------|---------|------|
+| 零参数推断 | `references/smart-inference.md` | 推断前 |
+| `--gate1` | `references/gate1-workflow.md` | P0 开始前 |
+| `--gate2` | `references/gate2-workflow.md` | S0 开始前 |
+| `--self` | `references/self-check-workflow.md` | SC0 开始前 |
+| `--analyze` | `references/analyze-workflow.md` | AC0 开始前 |
+| 查看完整参数 | `references/full-parameters.md` | 用户请求时 |
+| 首次输出日志 | `references/progress-format.md` | 日志前 |
+| 检测到反模式 | `references/error-output-format.md` | 检测时 |
+| PRD 变更 | `references/prd-revision-workflow.md` + `references/plan-tweak-workflow.md` | `--prd-changed` 时 |
+| Plan 微调 | `references/plan-tweak-workflow.md` | `--plan-tweak` 时 |
+| Unit 完成后 | `references/knowledge-compounding.md` | evolve 检查时 |
 
 ## 参考文件索引
 
@@ -340,7 +225,7 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 | [references/gate2-workflow.md](references/gate2-workflow.md) | Gate 2 S0→S5、Schema 验证、Audit/Debug 模式、Compaction Recovery |
 | [references/self-check-workflow.md](references/self-check-workflow.md) | Self-Check SC0→SC5、会话定位、日志提取、Plan 质量分析、报告生成 |
 | [references/analyze-workflow.md](references/analyze-workflow.md) | Cross-Artifact 一致性分析 AC0→AC5 |
-| [references/anti-patterns.md](references/anti-patterns.md) | 禁止行为完整规则（58 条去重） |
+| [references/anti-patterns.md](references/anti-patterns.md) | 禁止行为完整规则（60 条去重） |
 | [references/first-run-guide.md](references/first-run-guide.md) | 首次使用引导 + 智能推断规则 |
 | [references/project-config.md](references/project-config.md) | 项目配置 + Preset 预设 + `.qgw/` 覆盖 |
 | [references/prd-structure.md](references/prd-structure.md) | PRD 目录结构规范 + 全内容解析规则（文字+图片+表格+附件） |
@@ -355,6 +240,12 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 | [evaluations/](evaluations/) | Skill 效果评估框架 |
 | [scripts/gate-enforcer.py](scripts/gate-enforcer.py) | 确定性执行引擎（步骤状态机 + Guard 检查） |
 | [references/general-protocols.md](references/general-protocols.md) | 通用工作协议（5问题重启测试、2-Action Rule、3-Strike Protocol） |
+| [references/smart-inference.md](references/smart-inference.md) | 智能推断规则 + 推断决策树 + Preset 预设展开 |
+| [references/full-parameters.md](references/full-parameters.md) | 全部参数表 + 参数组合矩阵 + 互斥规则 |
+| [references/progress-format.md](references/progress-format.md) | 进度输出格式 + 平台标识 + 状态图标 |
+| [references/error-output-format.md](references/error-output-format.md) | 错误输出格式 + 示例 + 错误级别 |
+| [references/knowledge-compounding.md](references/knowledge-compounding.md) | Knowledge Compounding 自进化机制 + 阈值升级规则 |
+| [references/plan-tweak-workflow.md](references/plan-tweak-workflow.md) | Plan 微调工作流 TW1-TW4（声明→分析→执行→标记） |
 
 ## 版本记录
 

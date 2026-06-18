@@ -65,3 +65,76 @@ jobs:
             exit 1
           fi
           echo "✅ No  references found"
+
+  python-syntax:
+    name: Python Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile all Python files
+        run: |
+          errors=0
+          for f in $(find . -name "*.py" -not -path "./node_modules/*" -not -path "./.git/*"); do
+            echo "Checking $f"
+            python3 -m py_compile "$f" || errors=$((errors + 1))
+          done
+          if [ $errors -gt 0 ]; then
+            echo "❌ $errors Python file(s) failed syntax check"
+            exit 1
+          fi
+          echo "✅ All Python files pass syntax check"
+
+  unit-tests:
+    name: Unit Tests
+    needs: python-syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        run: pip install pytest
+      - name: Run unit tests
+        run: |
+          if [ -d "skills/quality-gate-workflow/scripts/tests" ]; then
+            python -m pytest skills/quality-gate-workflow/scripts/tests/ -v --tb=short
+          else
+            echo "No test directory found, skipping"
+          fi
+
+  smoke-tests:
+    name: Smoke Tests
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run gate-enforcer smoke test
+        run: |
+          if [ -f "skills/quality-gate-workflow/scripts/gate-enforcer.py" ]; then
+            python skills/quality-gate-workflow/scripts/gate-enforcer.py --help
+            echo "✅ gate-enforcer.py smoke test passed"
+          else
+            echo "gate-enforcer.py not found, skipping"
+          fi
+
+  manifest-check:
+    name: Manifest Consistency Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate manifest
+        run: python scripts/generate-manifest.py --validate

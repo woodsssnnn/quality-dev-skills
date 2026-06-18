@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'version.json'
+
+jobs:
+  detect-version-change:
+    name: Detect Version Change
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+      changed: ${{ steps.parse.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Parse version
+        id: parse
+        run: |
+          current=$(python3 -c "import json; d=json.load(open('version.json')); print(d['skills']['quality-gate-workflow']['version'])")
+          previous=$(git show HEAD~1:version.json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['skills']['quality-gate-workflow']['version'])" 2>/dev/null || echo "none")
+          echo "version=$current" >> "$GITHUB_OUTPUT"
+          if [ "$current" != "$previous" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Version changed: $previous -> $current"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Version unchanged: $current"
+          fi
+
+  validate-changelog:
+    name: Validate CHANGELOG
+    needs: detect-version-change
+    if: needs.detect-version-change.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check CHANGELOG has version entry
+        run: |
+          version="${{ needs.detect-version-change.outputs.version }}"
+          for skill_dir in skills/*/; do
+            changelog="$skill_dir/CHANGELOG.md"
+            if [ -f "$changelog" ]; then
+              if grep -q "$version" "$changelog"; then
+                echo "✅ $changelog contains version $version"
+              else
+                echo "⚠️ $changelog missing version $version"
+              fi
+            fi
+          done
+
+  run-tests:
+    name: Run Tests Before Release
+    needs: [detect-version-change, validate-changelog]
+    if: needs.detect-version-change.outputs.changed == 'true'
+    uses: ./.github/workflows/quality-check.yml
+
+  create-release:
+    name: Create Release
+    needs: [detect-version-change, run-tests]
+    if: needs.detect-version-change.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create Git Tag
+        run: |
+          version="${{ needs.detect-version-change.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${version}" -m "Release v${version}"
+          git push origin "v${version}"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.detect-version-change.outputs.version }}
+          name: Release v${{ needs.detect-version-change.outputs.version }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false

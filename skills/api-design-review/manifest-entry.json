@@ -1,0 +1,33 @@
+{
+  "id": "api-design-review",
+  "version": "0.8.0.0",
+  "path": "skills/api-design-review",
+  "description": "REST API 设计审查：检查 URL 命名、HTTP 方法、响应码、分页和 OpenAPI 一致性",
+  "category": "vertical",
+  "triggers": {
+    "parameters": ["--api-review"],
+    "keywords": ["API review", "REST convention", "endpoint design", "OpenAPI"]
+  },
+  "inputs": {
+    "required": ["OpenAPI spec 文件（JSON）或路由定义文件"],
+    "optional": ["--routes 模式标记"]
+  },
+  "outputs": {
+    "artifacts": [],
+    "side_effects": ["控制台输出检查结果"]
+  },
+  "dependencies": {
+    "runtime": ["python>=3.8"],
+    "skills": ["quality-gate-workflow"],
+    "tools": ["Read", "Bash"]
+  },
+  "compatibility": {
+    "min_version": "0.5.0.0",
+    "platforms": ["claude-code", "codex", "opencode", "minocode", "general"]
+  },
+  "integration_points": {
+    "extends": ["quality-gate-workflow"],
+    "extended_by": [],
+    "shares_artifacts_with": ["quality-gate-workflow"]
+  }
+}

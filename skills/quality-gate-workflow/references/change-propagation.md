@@ -16,7 +16,7 @@
 
 ## CP-1: PRD 修订传播
 
-**触发**：PRD 版本从 vX.Y → vX.Y+1（由 RV5 触发）
+**触发**：PRD 版本从 vX.Y → vX.Y+1（由 RV5 触发 或 `--prd-changed` 正向触发）
 
 ### 强制传播项
 
@@ -51,7 +51,7 @@
 
 ## CP-2: Plan 修订传播
 
-**触发**：Plan 在 feedback loop 中被修改（由 Gate 1 反馈回路或 Gate 2 S2.5 边界检查触发）
+**触发**：Plan 在 feedback loop 中被修改（由 Gate 1 反馈回路或 Gate 2 S2.5 边界检查触发），或由 `--plan-tweak` 微调触发
 
 ### 强制传播项
 
@@ -84,6 +84,20 @@ if 修订新增/删除 unit:
     → 创建/删除对应的 verification JSON 文件
     → 更新 00-overview.md 的 chapters 列表
 ```
+
+### Plan 微调传播（`--plan-tweak` 触发）
+
+当通过 `plan-tweak` 子命令触发时，传播规则简化为：
+
+```
+1. Plan 文件 → 追加 QGW-VERSION 标记（type: plan-tweak）
+2. Session Summary → Decisions 表追加微调记录
+3. 受影响 item → 追加 needs_review: true 字段（不重置 status）
+```
+
+**禁止事项**：
+- ✘ 禁止 Plan 微调修改可验证项定义（升级使用 `--prd-changed`）
+- ✘ 禁止不追加 QGW-VERSION 就修改 Plan（反模式 #32）
 
 ### 禁止事项
 

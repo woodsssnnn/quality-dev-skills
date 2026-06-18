@@ -1,0 +1,66 @@
+name: QGW PR Check
+
+on:
+  workflow_call:
+    inputs:
+      skill-path:
+        description: '要检查的技能路径（如 skills/api-design-review）'
+        required: false
+        type: string
+        default: ''
+      min-score:
+        description: '最低评分等级（A/B/C）'
+        required: false
+        type: string
+        default: 'B'
+
+jobs:
+  pr-quality-check:
+    name: PR Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pytest
+
+      - name: Detect changed skills
+        id: detect
+        run: |
+          if [ -n "${{ inputs.skill-path }}" ]; then
+            echo "skills=${{ inputs.skill-path }}" >> "$GITHUB_OUTPUT"
+          else
+            changed=$(git diff --name-only origin/main...HEAD -- 'skills/' | cut -d'/' -f1-2 | sort -u | tr '\n' ' ')
+            echo "skills=$changed" >> "$GITHUB_OUTPUT"
+            echo "Changed skills: $changed"
+          fi
+
+      - name: Run PR check script
+        run: |
+          bash scripts/qgw-pr-check.sh \
+            --skills "${{ steps.detect.outputs.skills }}" \
+            --min-score "${{ inputs.min-score }}"
+
+      - name: Manifest consistency
+        run: python scripts/generate-manifest.py --validate
+
+      - name: Python syntax check
+        run: |
+          for f in $(git diff --name-only origin/main...HEAD -- '*.py'); do
+            echo "Checking $f"
+            python3 -m py_compile "$f"
+          done
+
+      - name: JSON validation
+        run: |
+          for f in $(git diff --name-only origin/main...HEAD -- '*.json'); do
+            echo "Validating $f"
+            python3 -c "import json; json.load(open('$f'))"
+          done

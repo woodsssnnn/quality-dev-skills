@@ -1,13 +1,24 @@
 ---
 name: your-skill-name
+category: quality-assurance  # quality-assurance | optimization | initialization | vertical
 allowed-tools:
   - Read
   - Grep
   - Glob
   - Bash
 description: "Use when the agent is [doing something specific]. Triggers on: [keyword1], [keyword2], [keyword3]."
+triggers:
+  parameters:
+    - --your-trigger
+  keywords:
+    - keyword1
+    - keyword2
 metadata:
   version: 1.0.0
+integration:
+  extends: []           # 本技能扩展的技能 id
+  extended_by: []       # 扩展本技能的技能 id
+  shares_artifacts_with: []  # 共享产物路径的技能 id
 ---
 
 # [技能名称]

@@ -1,0 +1,124 @@
+{
+  "generated_at": "2026-06-18T00:00:00Z",
+  "generator_version": "0.8.0.0",
+  "skills": [
+    {
+      "id": "quality-gate-workflow",
+      "version": "0.8.0.0",
+      "path": "skills/quality-gate-workflow",
+      "description": "质量门禁工作流：需求 → Plan → 代码全链路验证，五层防线保障交付质量",
+      "category": "quality-assurance",
+      "triggers": {
+        "parameters": ["--gate1", "--gate2", "--all", "--self", "--analyze"],
+        "keywords": ["质量门禁", "gate", "plan", "verifier", "验收"]
+      },
+      "inputs": {
+        "required": ["PRD 文件或需求描述"],
+        "optional": ["--strict", "--lite", "--incremental", "--e2e", "--fix"]
+      },
+      "outputs": {
+        "artifacts": [
+          "docs/plans/*.md",
+          "docs/reports/*.md",
+          "docs/verification/*.md",
+          ".qgw-engine-state.json"
+        ],
+        "side_effects": [
+          "更新 docs/INDEX.md",
+          "写入 .qgw-engine-state.json 状态文件"
+        ]
+      },
+      "dependencies": {
+        "runtime": ["python>=3.8"],
+        "skills": [],
+        "tools": ["Read", "Write", "Bash", "Grep", "Glob"]
+      },
+      "compatibility": {
+        "min_version": "0.5.0.0",
+        "platforms": ["claude-code", "codex", "opencode", "minocode", "general"]
+      },
+      "integration_points": {
+        "extends": [],
+        "extended_by": ["skill-optimizer"],
+        "shares_artifacts_with": ["skill-optimizer"]
+      }
+    },
+    {
+      "id": "skill-optimizer",
+      "version": "0.8.0.0",
+      "path": "skills/skill-optimizer",
+      "description": "技能自动优化框架：rollout → score → bounded edit → gate 循环，提升技能质量",
+      "category": "optimization",
+      "triggers": {
+        "parameters": ["--optimize"],
+        "keywords": ["优化", "optimize", "score", "评分"]
+      },
+      "inputs": {
+        "required": ["目标技能 SKILL.md 路径"],
+        "optional": ["--dry-run", "--target-score"]
+      },
+      "outputs": {
+        "artifacts": [
+          "skills/*/SKILL.md (modified)",
+          "eval/-dev-rule-report.md"
+        ],
+        "side_effects": [
+          "修改目标技能文件内容"
+        ]
+      },
+      "dependencies": {
+        "runtime": ["python>=3.8"],
+        "skills": ["quality-gate-workflow"],
+        "tools": ["Read", "Write", "Bash", "Grep"]
+      },
+      "compatibility": {
+        "min_version": "0.5.0.0",
+        "platforms": ["claude-code", "codex", "opencode", "minocode", "general"]
+      },
+      "integration_points": {
+        "extends": ["quality-gate-workflow"],
+        "extended_by": [],
+        "shares_artifacts_with": ["quality-gate-workflow"]
+      }
+    },
+    {
+      "id": "qgw-init",
+      "version": "0.8.0.0",
+      "path": "shared/project-dev-rule-template",
+      "description": "项目初始化技能模板：在 AI 会话内生成项目开发规范，建立质量基线",
+      "category": "initialization",
+      "triggers": {
+        "parameters": ["--init"],
+        "keywords": ["初始化", "init", "项目规范", "dev-rule"]
+      },
+      "inputs": {
+        "required": ["项目名称和描述"],
+        "optional": ["技术栈信息", "团队规模"]
+      },
+      "outputs": {
+        "artifacts": [
+          "SKILL.md (项目级)",
+          "hooks/on-create.sh",
+          "hooks/on-session-start.sh"
+        ],
+        "side_effects": [
+          "在项目根目录创建 .qgw/ 配置目录"
+        ]
+      },
+      "dependencies": {
+        "runtime": [],
+        "skills": [],
+        "tools": ["Read", "Write", "Bash"]
+      },
+      "compatibility": {
+        "min_version": "0.5.0.0",
+        "platforms": ["claude-code", "codex", "opencode", "minocode", "general"]
+      },
+      "integration_points": {
+        "extends": [],
+        "extended_by": ["quality-gate-workflow"],
+        "shares_artifacts_with": []
+      }
+    }
+  ]
+}
