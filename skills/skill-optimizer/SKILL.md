@@ -1,6 +1,6 @@
 ---
 name: skill-optimizer
-description: "按最佳实践规则优化已有技能的质量。通过 rollout → score → bounded edit → gate 循环持续提升技能 SKILL.md 的合规度与可用性。Triggers on: 优化技能, 优化skill, skill质量, skill评分, optimize skill."
+description: "按最佳实践规则优化已有技能的质量。通过 rollout → score → bounded edit → gate 循环持续提升技能 SKILL.md 的合规度与可用性。Triggers on: --optimize, 优化技能, 优化skill, skill质量, skill评分, optimize skill."
 allowed-tools:
   - Task
   - Agent
@@ -11,7 +11,7 @@ allowed-tools:
   - Write
   - Edit
 metadata:
-  version: 1.0.0
+  version: 0.6.0.0
 ---
 
 # Skill Optimizer
@@ -21,9 +21,11 @@ metadata:
 ## 快速开始
 
 **做什么**：按最佳实践规则优化已有技能质量（rollout → score → bounded edit → gate 循环）
-**怎么触发**：关键词"优化技能""优化 skill""skill 评分""skill 质量"
-**前置条件**：Python 3（运行 `scripts/evaluate.py` 打分）+ 一个待优化的目标技能（如 `skills/quality-gate-workflow`、`skills/<your-skill-name>`）
-**第一次用**：用 `--target skills/<skill-name>` 指定优化目标，工具会读取该技能的 SKILL.md 并按 `references/scoring-rules.md` 打分、迭代优化
+**怎么触发**：
+- 参数式（推荐）：`--optimize <skill-path>`
+- 关键词："优化技能""优化 skill""skill 评分""skill 质量"
+**前置条件**：Python 3（运行 `scripts/evaluate.py` 打分）+ 一个待优化的目标技能
+**第一次用**：用 `--optimize skills/<skill-name>` 指定优化目标，工具会读取该技能的 SKILL.md 并按 `references/scoring-rules.md` 打分、迭代优化
 
 ## 核心原则
 
@@ -96,10 +98,13 @@ eval/report.md         — 每轮 score 对比
 
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
-| `--target <skill-path>` | 目标技能路径 | 必填 |
+| `--optimize <skill-path>` | 优化指定技能（推荐触发方式） | — |
+| `--target <skill-path>` | 目标技能路径（同 --optimize） | 必填 |
 | `--max-epochs <n>` | 最大优化轮数 | 5 |
 | `--train-ratio <n>` | 训练集比例 | 0.8 |
 | `--output <dir>` | 输出目录 | `./optimized` |
+
+> `--optimize` 和 `--target` 等价，两者皆可触发。关键词触发作为 fallback。
 
 ## 快速参考
 

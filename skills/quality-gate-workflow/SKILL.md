@@ -3,7 +3,8 @@ name: quality-gate-workflow
 description: |-
   Use when user requests quality-gated development workflow for requirements-to-code traceability,
   or when implementing features that need full traceability from PRD to code.
-  Triggers on explicit parameters only: --gate1, --gate2, --all, --self, --analyze.
+  Triggers on explicit parameters: --gate1, --gate2, --all, --self, --analyze, --auto, --preset.
+  Also supports zero-parameter smart inference: describe your need and QGW suggests the right workflow.
 allowed-tools:
   - Task
   - Agent
@@ -14,24 +15,95 @@ allowed-tools:
   - Bash(git status *)
   - Bash(git log *)
 metadata:
-  version: 1.0
+  version: 0.6.0.0
 ---
 
 # 质量门禁工作流
 
-需求开发全链路质量保障。两个 Gate 确保需求不丢失、代码不偏离。
+> 需求不丢失、代码不偏离。两个 Gate 确保从 PRD 到 Code 的全链路质量保障。
 
 - **Gate 1**：需求 → 验证过的 Plan + 验收清单
 - **Gate 2**：Plan + 验收清单 → 验证过的 Code
 
-## 快速开始
+---
 
-1. 安装技能：在 quality-dev-skills 仓库目录执行 `bash scripts/install.sh`（首次使用时参见仓库根目录 `BOOTSTRAP.md`）
-2. 初始化工作区：`bash scripts/health-check.sh --init-workspace`
-3. 选择触发参数：`--gate1`（需求→Plan）/ `--gate2`（Plan→代码）/ `--all`（全流程）/ `--self`（复盘）/ `--analyze`（一致性分析）
-4. 可选修饰：`--strict` / `--lite` / `--incremental` / `--e2e` / `--fix`
+## 快速开始（30 秒上手）
 
-> ⚠️ 必须显式带参数触发，不使用关键词自动触发。未安装时参见 `BOOTSTRAP.md`。
+**方式 A — 零参数（推荐新手）**：直接描述你的需求，QGW 自动推断最佳流程并请你确认。
+
+```
+"帮我规划这个需求：用户注册需要邮箱验证..."     → 自动建议 --gate1 --prd
+"这里有个 Bug：登录时偶发 500 错误..."           → 自动建议 --gate2 --debug
+"按 docs/plan/user-auth.md 实现代码"              → 自动建议 --gate2 --impl
+"重构支付模块，统一错误处理"                      → 自动建议 --gate1 --opt
+```
+
+> 智能推断规则详见 [references/first-run-guide.md](references/first-run-guide.md)。推断结果**必须用户确认后**才执行。
+
+**方式 B — 场景预设**：
+
+```
+--preset quickfix    # 快速修 Bug（= --gate2 --debug）
+--preset feature     # 完整功能开发（= --all --strict）
+--preset hotfix      # 紧急修复全链路（= --gate1 --bug → --gate2 --debug）
+--preset review      # 复盘最近会话（= --self）
+--preset audit       # 审计已有代码（= --gate2 --audit）
+--preset minimal     # 轻量快速通道（= --gate1 --lite → --gate2 --incremental）
+```
+
+> Preset 只是参数别名，展开后仍走完整 Gate 流程，**不绕过任何门禁**。
+
+**方式 C — 显式参数（推荐进阶用户）**：`--gate1` / `--gate2` / `--all` / `--self` / `--analyze`
+
+**安装**：`bash scripts/install.sh`（首次使用参见 `BOOTSTRAP.md`）| **详细安装** → [references/installation.md](references/installation.md)
+
+---
+
+## 智能推断规则（`--auto` 模式）
+
+当用户消息不含显式参数时，QGW 根据输入内容自动推断：
+
+| 输入特征 | 推断结果 | 置信度信号 |
+|---------|----------|------------|
+| 含 PRD/需求文档文本或路径 | `--gate1 --prd` | 出现"需求""PRD""功能描述"等关键词 |
+| 含 Bug 描述/错误日志/堆栈 | `--gate2 --debug`（无 Plan）或 `--gate1 --bug`（需 Plan） | 出现"错误""Bug""异常""500"等关键词 |
+| 含已有 Plan 文件路径 | `--gate2 --impl` | 路径指向 plan/ 目录下的 .md 文件 |
+| 含"重构""优化""改进" | `--gate1 --opt` | 语义匹配 |
+| `.qgw/sessions/` 有活跃记录 | 提示恢复上次会话 | 检测到未完成 session |
+| 含"审计""检查已有代码" | `--gate2 --audit` | 语义匹配 |
+
+**推断流程**：
+1. 分析用户输入，匹配上表规则
+2. 输出建议：`💡 建议参数：--gate1 --prd（原因：检测到需求文档内容）`
+3. 等待用户确认或调整
+4. 确认后按推断参数执行
+
+> 多个规则匹配时，列出所有候选让用户选择。无法匹配时展示 [first-run-guide](references/first-run-guide.md) 引导。
+
+---
+
+## 常用参数
+
+### 一级参数：流程（必选其一）
+
+| 参数 | 含义 |
+|------|------|
+| `--gate1` | Gate 1: 需求→Plan |
+| `--gate2` | Gate 2: Plan→代码 |
+| `--all` | 全流程 Gate 1+2 串行 |
+| `--self` | 自检：复盘指定会话的 Gate 执行质量 |
+| `--analyze` | 跨 artifact 一致性分析（只读） |
+
+### 常用修饰符
+
+| 参数 | 含义 | 适用 |
+|------|------|------|
+| `--strict` | 零偏差通过，否则阻断 | 任意 |
+| `--lite` | 轻量快速通道（跳过 P1.5/P1.6/P1.7） | gate1, all |
+| `--incremental` | 增量验证（只验证变更影响的 item） | gate2, all |
+| `--e2e` | E2E 行为验证（运行项目测试套件） | gate2, all |
+
+> 完整参数表（含二级模式、`--self` 子参数等）→ 下方"全部参数"章节
 
 ## 核心机制
 
@@ -72,19 +144,7 @@ P1 → P1.5(DB) → P1.6(代码链路) → P1.7(PM 顾问) → P2 → P2.5(架�
 | "顾问和 verifier 重复了" | 顾问问"合不合理"，verifier 问"对不对齐"，覆盖不同维度 |
 | "这是 bug 修复，跳过顾问" | `--bug` 仅可跳过 PM 顾问的 D2/D4/D5；架构师顾问 A3（局部 vs 全局）仍必做 |
 
-## 参数调用语法
-
-用户消息中包含 `--gate1`/`--gate2`/`--all`/`--self` 参数时触发技能。不使用关键词自动触发。
-
-### 一级参数：流程（必选其一）
-
-| 参数 | 含义 |
-|------|------|
-| `--gate1` | Gate 1: 需求→Plan |
-| `--gate2` | Gate 2: Plan→代码 |
-| `--all` | 全流程 Gate 1+2 串行 |
-| `--self` | 自检：复盘指定会话的 Gate 执行质量 |
-| `--analyze` | 跨 artifact 一致性分析（只读） |
+## 全部参数
 
 ### 二级参数：模式（可选）
 
@@ -129,7 +189,7 @@ P1 → P1.5(DB) → P1.6(代码链路) → P1.7(PM 顾问) → P2 → P2.5(架�
 
 **Gate 1/2 详细步骤** → [references/gate1-workflow.md](references/gate1-workflow.md) | [references/gate2-workflow.md](references/gate2-workflow.md)
 
-**示例**：`"实现SP1 --gate2"` / `"审计报表 --gate2 --audit --fix"` / `"全流程 --all --strict"`
+**示例**：`"实现SP1 --gate2"` / `"审计报表 --gate2 --audit --fix"` / `"全流程 --all --strict"` / `"快速修复 --preset quickfix"`
 
 ## 进度输出
 
@@ -206,7 +266,7 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 
 ## 常见错误与禁止行为
 
-完整 46 条规则见 [references/anti-patterns.md](references/anti-patterns.md)。最常违规的：跳过 verifier（#1/#2）、验收标准模糊（#5）、需求猜测（#6）、凭记忆提取（#8）、over-fixing（#20）、顾问静默跳过（#25）、`--lite` 滥用（#26）、顾问自演（#27）。
+完整 57 条规则见 [references/anti-patterns.md](references/anti-patterns.md)。最常违规的：跳过 verifier（#1/#2）、验收标准模糊（#5）、需求猜测（#6）、凭记忆提取（#8）、over-fixing（#20）、顾问静默跳过（#25）、`--lite` 滥用（#26）、顾问自演（#27）。新增：PRD 无版本化修订（#49）、文档变更无下游传播（#54）、PRD 非目录格式（#57）。
 
 ## Knowledge Compounding（自进化）
 
@@ -231,6 +291,25 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 
 功能概览详见 [references/feature-overviews.md](references/feature-overviews.md)。
 
+## 错误输出格式
+
+当检测到反模式时，使用人类可读的错误输出：
+
+```
+❌ 操作被阻止：[人类可读的描述]
+   原因：[为什么这违反了工作流]
+   建议：[用户应该怎么做]
+   参考：反模式 #N（详细信息见 anti-patterns.md）
+```
+
+示例：
+```
+❌ 操作被阻止：验收标准描述模糊，无法验证
+   原因："有筛选功能"不够具体，验收标准要求可验证（反模式 #5）
+   建议：改为"筛选器=流程树多选，支持按节点类型过滤 (§6.1.1)"
+   参考：反模式 #5（详细信息见 anti-patterns.md）
+```
+
 ## 参考文件索引
 
 | 文件 | 内容 |
@@ -239,10 +318,15 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 | [references/gate2-workflow.md](references/gate2-workflow.md) | Gate 2 S0→S5、Schema 验证、Audit/Debug 模式、Compaction Recovery |
 | [references/self-check-workflow.md](references/self-check-workflow.md) | Self-Check SC0→SC5、会话定位、日志提取、Plan 质量分析、报告生成 |
 | [references/analyze-workflow.md](references/analyze-workflow.md) | Cross-Artifact 一致性分析 AC0→AC5 |
-| [references/anti-patterns.md](references/anti-patterns.md) | 禁止行为完整规则（46 条去重） |
+| [references/anti-patterns.md](references/anti-patterns.md) | 禁止行为完整规则（57 条去重） |
+| [references/first-run-guide.md](references/first-run-guide.md) | 首次使用引导 + 智能推断规则 |
+| [references/project-config.md](references/project-config.md) | 项目配置 + Preset 预设 + `.qgw/` 覆盖 |
+| [references/prd-structure.md](references/prd-structure.md) | PRD 目录结构规范 + 全内容解析规则（文字+图片+表格+附件） |
+| [references/prd-revision-workflow.md](references/prd-revision-workflow.md) | PRD 修订工作流 RV1-RV5（提案→影响分析→人工审批→执行→下游同步） |
+| [references/change-propagation.md](references/change-propagation.md) | 文档变更传播规则 CP-1~CP-5（PRD/Plan/Code/Report/ErrorPattern） |
 | [references/verifier-templates.md](references/verifier-templates.md) | Verifier 子代理 prompt 模板 + CROSS-CUTTING 横切检查清单 |
 | [references/advisor-templates.md](references/advisor-templates.md) | PM 顾问 + 架构师顾问 prompt 模板 |
-| [references/acceptance-criteria-schema.json](references/acceptance-criteria-schema.json) | 验收清单 JSON Schema v1.2（含 codeRefs/commitSha/clarifications）|
+| [references/acceptance-criteria-schema.json](references/acceptance-criteria-schema.json) | 验收清单 JSON Schema v1.2（含 codeRefs/commitSha/chapter/prdSection/prdAssets）|
 | [references/error-patterns.json](references/error-patterns.json) | 全局错误模式种子数据 |
 | [references/regression-test-cases.md](references/regression-test-cases.md) | 回归测试用例集 |
 | [references/constitution-template.md](references/constitution-template.md) | Gate 1 constitution 模板 |

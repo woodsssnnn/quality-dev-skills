@@ -42,6 +42,50 @@
 }
 ```
 
+## Preset 预设包
+
+Preset 是参数组合的场景化别名，**不绕过任何门禁**，展开后仍走完整 Gate 流程。
+
+### 内置预设
+
+| Preset | 等价参数 | 场景 | 说明 |
+|--------|----------|------|------|
+| `quickfix` | `--gate2 --debug` | 快速修 Bug | 无 Plan，直接定位并修复 |
+| `feature` | `--all --strict` | 完整功能开发 | 全流程 + 零偏差 |
+| `hotfix` | `--gate1 --bug` + `--gate2 --debug` | 紧急 Bug 修复 | 先分析 Bug 再生成修复 Plan 并实现 |
+| `review` | `--self` | 复盘最近会话 | 检查步骤完整性和执行质量 |
+| `audit` | `--gate2 --audit` | 审计已有代码 | 只检查不修改 |
+| `minimal` | `--gate1 --lite` + `--gate2 --incremental` | 轻量快速通道 | 适合小改动 |
+
+### 使用方式
+
+```bash
+# 方式 1：命令行参数
+--preset quickfix
+
+# 方式 2：.qgw/config.json 中设置默认 preset
+{ "preset": "quickfix" }
+
+# 方式 3：智能推断时自动建议（零参数模式）
+```
+
+### 自定义 Preset
+
+在 `.qgw/config.json` 中定义项目专属 preset：
+
+```json
+{
+  "presets": {
+    "my-workflow": {
+      "gate1": "--prd",
+      "gate2": "--impl --e2e"
+    }
+  }
+}
+```
+
+> 自定义 preset 同样不绕过门禁，只是简化参数记忆。
+
 ## CLAUDE.md 配置
 
 | 配置项 | 位置 | 说明 |

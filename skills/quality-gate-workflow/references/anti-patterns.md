@@ -1,6 +1,14 @@
 # Anti-Patterns（质量门禁禁止行为）
 
 > 合并自 Red Lines + Common Mistakes + Rationalization Table，去重后唯一规则。
+>
+> **错误输出格式**：当检测到反模式时，使用人类可读格式输出：
+> ```
+> ❌ 操作被阻止：[人类可读的描述]
+>    原因：[为什么这违反了工作流]
+>    建议：[用户应该怎么做]
+>    参考：反模式 #N
+> ```
 
 ## 验证与提交
 
@@ -106,3 +114,21 @@
 
 47. Gate 2 完成后不更新 Plan 文档。Gate 2 Step 5 必须更新 Plan 文档中的 Task 状态、可验证项状态和 Gate 2 实现记录，实现全生命周期闭环。未更新 = 反模式 #47。
 48. Plan 文档与 verification JSON 不同步。Plan 中的可验证项状态必须与 `docs/verification/unit-*.json` 保持一致。不同步 = 反模式 #48。
+
+## PRD 管理
+
+49. PRD 修改无版本化修订流程。PRD 是需求源头，直接修改会导致下游 Plan/Verification/Code 失去追溯依据。必须使用 PRD Revision Workflow (RV1-RV5) 进行版本化修订。
+50. PRD 修订后未做下游影响分析。PRD 变更可能导致已有 Plan 和代码失效，必须执行 RV2 影响分析，标记受影响 item 为 NEEDS_REVIEW。
+57. PRD 使用单文件格式而非目录格式。PRD 必须是目录（`docs/prd/{feature}/`），包含主文档、图片、表格、附件等所有需求资产，支持增量更新和多类型文件管理。
+
+## Plan 结构
+
+51. Plan 不遵循 PRD 章节结构。Plan 必须按 PRD §X.X 章节分组（`ch-{X.X}-{name}/`），而非扁平 Unit 编号，确保 PRD↔Plan 追溯清晰。发现旧格式必须重构为章节式。
+52. 共享基础设施未分离到 `03-shared-infra.md`。跨章节共享的 DB 设计、通用组件、API 约定必须集中在共享基础设施文件中，声明 dependents 列表。
+55. `ch-{X.X}/README.md` 缺失 PRD 原文引用。章节 README 是 PRD→Plan 的桥接点，必须包含 PRD §X.X 的关键原文和业务规则。
+56. Verification JSON 缺失 `chapter`/`prdSection` 字段。章节式 Plan 的 Verification JSON 必须包含章节映射，否则 `--analyze` 无法执行 PRD→Plan 追溯。
+
+## 文档生命周期
+
+53. Report 未注册到 `reports/INDEX.md` 和 `QGW-INDEX.md`。未索引的报告是不可发现的生命周期断点，无法被 `--self` 或 `--analyze` 追踪。
+54. 文档变更无下游传播。修改文档后必须按变更传播规则 (CP-1~CP-5) 更新下游依赖文档，禁止孤立修改。详见 `references/change-propagation.md`。

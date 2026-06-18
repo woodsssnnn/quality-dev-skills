@@ -6,6 +6,8 @@
 #   .\scripts\install.ps1                          # 安装全部到 $env:USERPROFILE\.agents\skills
 #   .\scripts\install.ps1 -Skill quality-gate-workflow    # 安装单个
 #   .\scripts\install.ps1 -Update                  # 更新（重新链接）
+#   .\scripts\install.ps1 -Init                    # 一键安装：链接 + 工作区初始化 + 健康检查
+#   .\scripts\install.ps1 -DryRun                  # 预览安装动作，不执行
 #
 # 来源目录不绑定：git clone 到任意位置，在该目录下运行本脚本即可全局安装。
 # 脚本基于自身位置自动定位源目录（$RepoDir\skills\）。
@@ -22,13 +24,17 @@
 param(
     [string[]]$Skill = @(),
     [switch]$Update = $false,
+    [switch]$Init = $false,
+    [switch]$DryRun = $false,
     [switch]$Help = $false
 )
 
 if ($Help) {
-    Write-Host "Usage: .\scripts\install.ps1 [[-Skill] <string[]>] [-Update]"
+    Write-Host "Usage: .\scripts\install.ps1 [[-Skill] <string[]>] [-Update] [-Init] [-DryRun]"
     Write-Host "  -Skill    Skill name, e.g. quality-gate-workflow, skill-optimizer"
     Write-Host "  -Update   Update existing links (re-establish)"
+    Write-Host "  -Init     Full setup: link + workspace init + health check"
+    Write-Host "  -DryRun   Preview actions without executing"
     Write-Host "  Target:   $env:USERPROFILE\.agents\skills"
     exit 0
 }
@@ -107,6 +113,22 @@ Write-Host "  symlink=$CanSymlink  junction=$CanJunction  scope=global" -Foregro
 Write-Host "========================================="
 Write-Host ""
 
+# --DryRun 模式：预览但不执行
+if ($DryRun) {
+    Write-Host "[install] DRY RUN — no changes will be made" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "[install] Would link skills to: $env:USERPROFILE\.agents\skills"
+    $skillNames = if ($Skill.Count -gt 0) { $Skill -join ", " } else { "all" }
+    Write-Host "[install] Skills to install: $skillNames"
+    if ($Init) {
+        Write-Host "[install] Would initialize workspace: docs/{plans,verification,reports,sessions}"
+        Write-Host "[install] Would run health check"
+    }
+    Write-Host ""
+    Write-Host "[install] Run without -DryRun to apply." -ForegroundColor Yellow
+    exit 0
+}
+
 $report = @()
 $skillsToInstall = if ($Skill.Count -gt 0) { $Skill } else {
     Get-ChildItem -Path $SkillsSrc -Directory | ForEach-Object { $_.Name }
@@ -147,6 +169,41 @@ Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host " Install result" -ForegroundColor Cyan
 Write-Host "========================================="
 $report | Format-Table -AutoSize | Out-String | Write-Host
+
+# --Init 模式：额外执行工作区初始化
+if ($Init) {
+    Write-Host "" -ForegroundColor Cyan
+    Write-Host "[install] Initializing workspace..." -ForegroundColor Cyan
+
+    $workspaceDirs = @("docs\plans", "docs\verification", "docs\reports", "docs\sessions")
+    foreach ($dir in $workspaceDirs) {
+        if (-not (Test-Path $dir)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            Write-Host "[install]   Created: $dir" -ForegroundColor Green
+        } else {
+            Write-Host "[install]   Exists: $dir" -ForegroundColor DarkGray
+        }
+    }
+
+    $healthCheck = Join-Path $RepoDir "skills\quality-gate-workflow\scripts\health-check.sh"
+    if (Test-Path $healthCheck) {
+        Write-Host "" -ForegroundColor Cyan
+        Write-Host "[install] Running health check..." -ForegroundColor Cyan
+        try { bash $healthCheck } catch {
+            Write-Host "[install] Health check completed with warnings" -ForegroundColor Yellow
+        }
+    }
+}
+
+# --DryRun 模式已在上方处理，此处正常结束输出
+if (-not $DryRun) {
+    Write-Host ""
+    Write-Host " Next steps:" -ForegroundColor Green
+    Write-Host "   1. 在项目根目录创建 .qgw/ 目录（可选，用于项目定制）" -ForegroundColor Gray
+    Write-Host "   2. 在 AI 对话中说`"帮我实现这个需求`"开始使用" -ForegroundColor Gray
+    Write-Host "   3. 或使用 --preset feature 启动完整流程" -ForegroundColor Gray
+}
+
 Write-Host ""
 Write-Host "Update: re-run install.ps1 after git pull" -ForegroundColor Gray
 Write-Host "Uninstall: bash scripts/uninstall.sh  (or remove dirs manually)" -ForegroundColor Gray

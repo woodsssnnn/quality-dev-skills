@@ -1,26 +1,66 @@
 {
   "template": {
     "name": "project-dev-rule-template",
-    "version": "1.0.0",
+    "version": "0.6.0.0",
     "description": "项目开发规范技能模板",
     "compatibility": {
-      "min_project_version": "1.0.0",
-      "max_project_version": "2.0.0"
+      "min_project_version": "0.5.0.0",
+      "max_project_version": "1.0.0.0"
     }
   },
   "skills": {
     "quality-gate-workflow": {
-      "version": "1.0.0",
+      "version": "0.6.0.0",
       "description": "质量门禁工作流"
     },
     "skill-optimizer": {
-      "version": "1.0.0",
+      "version": "0.6.0.0",
       "description": "技能自动优化框架"
     }
   },
   "changelog": [
     {
-      "version": "1.0.0",
+      "version": "0.6.0.0",
+      "date": "2026-06-18",
+      "changes": [
+        "文档全生命周期管理系统",
+        "新增 PRD 目录化规范：PRD 必须是目录，支持图片/表格/附件等多类型资产",
+        "新增全内容解析规则：Gate 1 P1 必须处理文字+图片+表格+附件",
+        "新增 PRD 修订工作流 RV1-RV5：提案→影响分析→人工审批→执行→下游同步",
+        "新增变更传播规则 CP-1~CP-5：禁止孤立修改，强制下游同步",
+        "Plan 结构重设计：按 PRD 章节分组（ch-X.X），共享基础设施分离",
+        "Report 生命周期集成：8 种报告嵌入工作流节点，强制注册到 INDEX",
+        "反模式追加 #49-#57（9 条新规则，总计 57 条）",
+        "acceptance-criteria-schema.json 增强：新增 chapter/prdSection/prdAssets 字段",
+        "强制迁移：发现旧格式 Plan 直接重构为章节式"
+      ]
+    },
+    {
+      "version": "0.5.0.0",
+      "date": "2026-06-18",
+      "changes": [
+        "版本号降级：Major 1→0，明确传达活跃开发期状态",
+        "采用 4 级版本号：Major.Minor.Patch.Iteration",
+        "合并 v1.0.0 + v1.1.0 所有功能到此版本",
+        "Major=0 表示架构尚未冻结，仍在大量开发中"
+      ]
+    },
+    {
+      "version": "1.1.0 (已合并至 0.5.0.0)",
+      "date": "2026-06-18",
+      "changes": [
+        "新增 --auto 智能推断模式：零参数触发，自动识别意图并建议参数",
+        "新增 Preset 预设包：quickfix/feature/hotfix/review/audit/minimal 6 个场景化快捷入口",
+        "新增 first-run-guide.md：首次使用引导 + 智能推断规则详解",
+        "渐进式披露重构 SKILL.md：快速开始 → 常用参数 → 全部参数 → 深度参考",
+        "安装脚本增加 --init 一键安装 + --dry-run 预览模式",
+        "错误输出人性化：反模式检测改为人类可读格式",
+        "skill-optimizer 新增 --optimize 参数式触发",
+        "支持自定义 Preset（.qgw/config.json presets 字段）"
+      ]
+    },
+    {
+      "version": "1.0.0 (已合并至 0.5.0.0)",
       "date": "2026-06-18",
       "changes": [
         "初始开源发布",

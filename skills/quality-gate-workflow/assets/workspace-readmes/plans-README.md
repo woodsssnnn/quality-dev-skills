@@ -1,37 +1,58 @@
 # docs/plans/ — 实现计划文档
 
-本目录存放质量门禁 Gate 1 产出的实现计划文档。
+本目录存放质量门禁 Gate 1 产出的实现计划文档。Plan 必须按 PRD 章节结构组织。
 
-## 命名规则
-
-| 类型 | 命名格式 | 示例 |
-|------|---------|------|
-| 新功能 | `feat-<需求编号>-<简要说明>.md` | `feat-07-process-track.md` |
-| Bug 修复 | `BUG-<yyyy-MM-dd>-<需求编号>-<简要说明>.md` | `BUG-2026-06-09-07-附件显示.md` |
-| 重构优化 | `refactor-<简要说明>.md` | `refactor-report-query-optimize.md` |
-
-## 文档结构
-
-每个 Plan 文档包含：
-
-1. **头部**：目标、架构、技术栈
-2. **任务分解**：SP1~SPN，每个任务含文件列表和具体步骤
-3. **验收清单**（Gate 1 P5 追加）：`<!-- Appended by quality-gate-workflow Gate 1 -->`
-
-## 验收清单格式
-
-Plan 文档末尾会被自动追加验收清单。**不要手动编辑**追加部分。
+## 目录结构（章节式，强制）
 
 ```
-<!-- Appended by quality-gate-workflow Gate 1 -->
-## Acceptance Criteria Checklist
-Source: [需求路径]
-Generated: [日期]
-
-### Unit 1: [名称]
-- [ ] Item 1 (§X.X): [规格]
+docs/plans/{feature}/
+├── 00-overview.md              # 总览（frontmatter 含 PRD 版本、章节列表）
+├── 01-prd-summary.md           # PRD 摘要 + 章节索引映射
+├── 02-architecture.md          # 架构设计
+├── 03-shared-infra.md          # 共享基础设施：DB Schema、通用组件、API 约定
+├── ch-{X.X}-{name}/            # 按 PRD 章节分组
+│   ├── README.md               # 章节概述 + PRD §X.X 原文引用
+│   ├── unit-{N}-impl.md        # 实现计划
+│   └── unit-{N}-acceptance.md  # 本章验收清单
+└── 99-acceptance-summary.md    # 全局验收汇总
 ```
+
+### 00-overview.md Frontmatter
+
+```yaml
+---
+prd-source: docs/prd/{feature}/      # PRD 目录路径
+prd-version: v1.0.0.0
+plan-version: v1.0.0.0
+chapters:
+  - id: ch-2.1
+    name: user-registration
+    prd-section: "§2.1"
+    units: [1, 2, 3]
+    status: planned               # planned | in-progress | verified | needs_review
+---
+```
+
+### 03-shared-infra.md
+
+跨章节共享的内容必须集中在此文件：
+- Database Schema（新增表、修改表、被引用章节）
+- Common Components（组件名、路径、使用章节）
+- API Conventions（RESTful 约定、分页、错误码）
+
+每个共享项必须声明 `Dependents`（依赖它的章节列表）。
+
+### ch-{X.X}/README.md
+
+章节 README 必须包含：
+1. PRD §X.X 的关键原文引用（反模式 #55）
+2. 章节目标和约束
+3. 涉及的 PRD 资产（图片/表格）
+
+## 强制迁移
+
+发现旧格式（扁平 `.md` 文件）必须重构为章节式目录结构（反模式 #51）。
 
 ## 与 verification/ 的关系
 
-每个 Plan 文件对应 `docs/verification/` 下的一个同名 JSON 文件，包含结构化的验收数据。Plan 文档是 Markdown 人类可读版，JSON 是机器可读版。
+每个 Unit 对应 `docs/verification/` 下的一个 JSON 文件，包含 `chapter`、`prdSection`、`prdAssets` 字段。
