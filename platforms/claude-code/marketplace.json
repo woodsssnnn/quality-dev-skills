@@ -1,0 +1,11 @@
+{
+  "name": "quality-dev-skills",
+  "version": "1.0.0",
+  "description": "质量门禁工作流和项目开发规范技能集合",
+  "author": {
+    "name": "quality-dev-skills"
+  },
+  "category": "Development",
+  "tags": ["quality", "gate", "workflow", "dev-rule"],
+  "pricing": "free"
+}

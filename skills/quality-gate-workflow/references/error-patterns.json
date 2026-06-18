@@ -1,0 +1,51 @@
+{
+  "version": "2.0",
+  "scope": "global",
+  "description": "全局错误模式种子数据。仅包含跨项目通用模式。工作空间特有模式存放在 docs/verification/error-patterns.json。",
+  "globalThresholds": {
+    "promoteRequired": 3,
+    "commonMistakes": 3,
+    "redLines": 5,
+    "rationalizationTable": 8
+  },
+  "patterns": [
+    {
+      "id": "EP001",
+      "category": "verification",
+      "description": "验收标准太模糊，用泛称代替具体规格",
+      "promotedFrom": ["tcl-finance", "未命名项目"],
+      "totalPromotions": 2,
+      "status": "active",
+      "examples": [
+        "写'有筛选器'而非'筛选器=流程树多选组件'",
+        "写'字段正确'而非'跟进人页面无审核人字段'"
+      ]
+    },
+    {
+      "id": "EP002",
+      "category": "self-review",
+      "description": "自验通过但 verifier 抓到偏差（自我审查偏见）",
+      "promotedFrom": ["tcl-finance"],
+      "totalPromotions": 1,
+      "status": "active",
+      "examples": [
+        "自验写了'附件正确'但 verifier 发现 maxCount 不一致",
+        "自验写了'字段完整'但 verifier 发现缺少两个字段"
+      ]
+    },
+    {
+      "id": "EP003",
+      "category": "plan-drift",
+      "description": "Plan 翻译需求时丢失细节，代码照 Plan 写但偏离需求",
+      "promotedFrom": ["tcl-finance"],
+      "totalPromotions": 1,
+      "status": "active",
+      "examples": [
+        "PRD 要求'审核人 Radio 3 选项'，Plan 写'审核人 Radio'，代码只加了 2 个选项",
+        "PRD 要求'必填受配置控制'，Plan 写'必填'，代码硬编码 required=true"
+      ]
+    }
+  ],
+  "upgradeLog": [],
+  "promoteLog": []
+}

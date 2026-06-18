@@ -1,0 +1,46 @@
+{
+  "template": {
+    "name": "project-dev-rule-template",
+    "version": "1.0.0",
+    "description": "项目开发规范技能模板",
+    "compatibility": {
+      "min_project_version": "1.0.0",
+      "max_project_version": "2.0.0"
+    }
+  },
+  "skills": {
+    "quality-gate-workflow": {
+      "version": "1.0.0",
+      "description": "质量门禁工作流"
+    },
+    "skill-optimizer": {
+      "version": "1.0.0",
+      "description": "技能自动优化框架"
+    }
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-06-18",
+      "changes": [
+        "初始开源发布",
+        "质量门禁工作流：需求→Plan→代码全链路验证",
+        "五层防线：验收标准提取 → PM顾问评议 → Plan撰写 → 架构师顾问评议 → 独立verifier验证",
+        "参数式触发：--gate1 / --gate2 / --all / --self / --analyze",
+        "模式支持：PRD / Bug / Optimization / Implementation / Audit / Debug",
+        "修饰参数：--strict / --lite / --incremental / --e2e / --fix",
+        "结构化需求澄清（多选题模式）",
+        "Boundary Enforcement（变更范围检查）",
+        "增量验证（--incremental）",
+        "Git Trailer 可追溯性",
+        "Cross-Artifact 一致性分析（--analyze）",
+        "E2E 行为验证（--e2e）",
+        "文档生命周期：Master Index + Session Summary + Plan 版本化",
+        "Knowledge Compounding 自进化机制",
+        "技能自动优化框架：rollout → score → bounded edit → gate 循环",
+        "项目开发规范技能模板（AI会话内生成）",
+        "多平台支持：Claude Code / Codex / OpenCode / MiMoCode / 通用"
+      ]
+    }
+  ]
+}

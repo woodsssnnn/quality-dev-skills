@@ -1,0 +1,24 @@
+{
+  "name": "quality-dev-skills",
+  "version": "1.0.0",
+  "description": "质量门禁工作流和项目开发规范技能集合",
+  "author": {
+    "name": "quality-dev-skills"
+  },
+  "homepage": "https://gitcode.com/songnan/quality-dev-skills",
+  "license": "MIT",
+  "keywords": ["quality", "gate", "workflow", "dev-rule", "skills"],
+  "skills": "../skills/",
+  "interface": {
+    "displayName": "Quality Dev Skills",
+    "shortDescription": "质量门禁工作流和项目开发规范",
+    "longDescription": "提供质量门禁工作流（需求→Plan→代码全链路验证）、技能优化框架和项目开发规范模板。",
+    "category": "Development",
+    "capabilities": ["Instructions", "Lifecycle hooks", "Skills"],
+    "defaultPrompt": [
+      "使用质量门禁工作流",
+      "运行 --gate1 进行需求到Plan的验证",
+      "运行 --gate2 进行Plan到代码的验证"
+    ]
+  }
+}

@@ -1,0 +1,226 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Acceptance Criteria Checklist",
+  "description": "质量门禁验收清单结构化格式。Gate 1 产出后持久化，Gate 2 读取验证。",
+  "type": "object",
+  "required": ["version", "plan", "gate", "generated", "units", "toolCalls"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.2"
+    },
+    "plan": {
+      "type": "string",
+      "description": "Plan 文档路径"
+    },
+    "source": {
+      "type": "string",
+      "description": "需求文档路径（PRD / bug 描述 / 优化目标）"
+    },
+    "clarifications": {
+      "type": "string",
+      "description": "澄清文件路径（如 _clarifications.md），无则省略"
+    },
+    "gate": {
+      "type": "integer",
+      "enum": [1, 2],
+      "description": "产出此清单的 Gate 编号"
+    },
+    "generated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "items"],
+        "properties": {
+          "name": { "type": "string" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "spec", "source", "status"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^U\\d+-\\d+$",
+                  "description": "格式: U{unit序号}-{item序号}"
+                },
+                "spec": {
+                  "type": "string",
+                  "description": "具体可验证的规格描述"
+                },
+                "source": {
+                  "type": "string",
+                  "description": "需求章节引用，格式: §X.X"
+                },
+                "category": {
+                  "type": "string",
+                  "enum": ["component-type", "field-presence", "required-default", "display-order", "data-source", "condition-logic", "quantity-limit", "label-text", "business-rule"],
+                  "description": "可验证项类别"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["PENDING", "PASS", "FAIL", "SKIPPED"],
+                  "default": "PENDING"
+                },
+                "evidence": {
+                  "type": "string",
+                  "description": "PASS/FAIL 的证据（代码引用或说明）"
+                },
+                "rootCause": {
+                  "type": "string",
+                  "enum": ["CODE", "PLAN"],
+                  "description": "仅在 status=FAIL 时填写"
+                },
+                "toolCallId": {
+                  "type": "string",
+                  "description": "verifier 子代理的 Task/Agent 工具调用 ID。空字符串 = 未经验证。提交前 Hook 检查此字段。"
+                },
+                "skipReason": {
+                  "type": "string",
+                  "description": "仅在 status=SKIPPED 时填写，说明跳过原因（如 incremental: 未变更 codeRefs 涉及的文件）"
+                },
+                "codeRefs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "file": { "type": "string", "description": "代码文件路径" },
+                      "lines": { "type": "string", "description": "行号范围，如 142-158" },
+                      "description": { "type": "string", "description": "变更描述" }
+                    }
+                  },
+                  "description": "PASS 项的代码变更位置引用，Gate 2 S4 verifier 输出"
+                },
+                "commitSha": {
+                  "type": "string",
+                  "description": "提交的 git commit SHA，Gate 2 S5 提交后写入"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "verifierReports": {
+      "type": "array",
+      "description": "verifier 子代理验证报告记录",
+      "items": {
+        "type": "object",
+        "required": ["round", "timestamp", "result"],
+        "properties": {
+          "round": { "type": "integer" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "result": { "type": "string", "enum": ["PASS", "FAIL"] },
+          "failItems": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "FAIL 的 item id 列表"
+          },
+          "verifierType": {
+            "type": "string",
+            "enum": ["self-verify", "independent-verifier"],
+            "description": "自验还是独立 verifier"
+          }
+        }
+      }
+    },
+    "feedbackRounds": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "PLAN 根因反馈 Gate 1 的循环次数。超过 maxFeedbackRounds 后强制停止交用户。"
+    },
+    "maxFeedbackRounds": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 2,
+      "description": "反馈回路硬停止阈值，可配置。"
+    },
+    "toolCalls": {
+      "type": "array",
+      "description": "verifier 子代理的工具调用记录，作为验证的物证链。",
+      "items": {
+        "type": "object",
+        "required": ["step", "toolCallId", "timestamp", "result"],
+        "properties": {
+          "step": {
+            "type": "string",
+            "enum": ["P4", "S4", "Audit-C", "D4"],
+            "description": "质量门禁步骤标识"
+          },
+          "toolCallId": {
+            "type": "string",
+            "description": "Task/Agent 工具调用的唯一标识"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "result": {
+            "type": "string",
+            "enum": ["PASS", "FAIL"],
+            "description": "verifier 验证结果"
+          }
+        }
+      }
+    },
+    "evolveStatus": {
+      "type": "object",
+      "description": "最后一次 evolve 检查的状态，持久化到文件防止 compaction 丢失。",
+      "properties": {
+        "lastCheck": {
+          "type": "string",
+          "format": "date-time",
+          "description": "最后一次 evolve 检查时间"
+        },
+        "hasNewPatterns": {
+          "type": "boolean",
+          "description": "是否有新增错误模式"
+        },
+        "patternCount": {
+          "type": "integer",
+          "description": "累计错误模式数量"
+        }
+      }
+    },
+    "e2eResult": {
+      "type": "object",
+      "description": "E2E 行为验证结果，仅在 --e2e 模式下填写。",
+      "properties": {
+        "framework": {
+          "type": "string",
+          "description": "检测到的测试框架（jest/maven/pytest/playwright）"
+        },
+        "command": {
+          "type": "string",
+          "description": "实际执行的测试命令"
+        },
+        "passed": {
+          "type": "integer",
+          "description": "通过的测试用例数"
+        },
+        "failed": {
+          "type": "integer",
+          "description": "失败的测试用例数"
+        },
+        "skipped": {
+          "type": "integer",
+          "description": "跳过的测试用例数"
+        },
+        "failedTests": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "失败用例列表（文件:行号）"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

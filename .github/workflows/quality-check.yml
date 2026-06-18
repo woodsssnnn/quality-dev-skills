@@ -1,0 +1,67 @@
+name: Quality Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  link-check:
+    name: Markdown Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          check-modified-files-only: 'yes'
+          base-branch: 'main'
+
+  json-validation:
+    name: JSON Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JSON files
+        run: |
+          for f in $(find . -name "*.json" -not -path "./node_modules/*"); do
+            echo "Validating $f"
+            python3 -c "import json; json.load(open('$f'))" || exit 1
+          done
+
+  shell-check:
+    name: Shell Script Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+      - name: Run ShellCheck
+        run: |
+          for f in $(find scripts -name "*.sh"); do
+            echo "Checking $f"
+            shellcheck "$f" || true
+          done
+
+  -scan:
+    name:  Brand Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for  references
+        run: |
+          # Exclude CHANGELOG (historical) and eval reports (examples)
+          result=$(grep -ri "" --include="*.md" --include="*.sh" --include="*.ps1" --include="*.json" \
+            --exclude-dir="eval" \
+            --exclude="CHANGELOG.md" \
+            --exclude="-dev-rule-report.md" \
+            . || true)
+          if [ -n "$result" ]; then
+            echo "⚠️ Found  references:"
+            echo "$result"
+            echo "Please remove or update these references."
+            exit 1
+          fi
+          echo "✅ No  references found"

@@ -1,0 +1,70 @@
+# ===========================
+# quality-dev-skills .gitignore
+# ===========================
+
+# --- OS generated files ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# --- Node.js / npm ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# --- Shell ---
+*.sh.bak
+
+# --- Qoder / Agent runtime ---
+.qoder/
+.agents/
+vibe_images/
+
+# --- Project workspace (generated at runtime, not tracked) ---
+docs/plans/
+docs/verification/
+docs/reports/
+docs/sessions/
+docs/QGW-INDEX.md
+.qgw/
+
+# --- Logs ---
+*.log
+
+# --- Temp files ---
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# --- Compiled assets ---
+*.pyc
+*.class
