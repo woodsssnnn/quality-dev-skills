@@ -235,6 +235,40 @@ if not fail_items and not pending_items and not missing_toolcall:
     else:
         print(f'[quality-gate] ✅ Check 7: 全部 PASS ({pass_count} 项, 全部有 toolCallId)')
 
+# --- Check 8: 引擎状态与验收数据一致性 ---
+import os
+engine_state_file = 'docs/.qgw-engine-state.json'
+if os.path.exists(engine_state_file):
+    try:
+        with open(engine_state_file, 'r', encoding='utf-8') as f:
+            engine = json.load(f)
+        engine_gate = engine.get('gate', '')
+        engine_steps = engine.get('steps', {})
+        # 检查 S5/P5=COMPLETED 时验收 JSON 状态
+        for check_step in ['S5', 'P5']:
+            if check_step in engine_steps and engine_steps[check_step].get('status') == 'COMPLETED':
+                # 检查是否有 PENDING items
+                for unit in data.get('units', []):
+                    for item in unit.get('items', []):
+                        if item.get('status') == 'PENDING':
+                            issues.append(('block', f'Check 8 FAIL: 引擎 {check_step}=COMPLETED 但 item {item.get("id")} 仍为 PENDING'))
+                            break
+        # 检查 S4/P4=COMPLETED 时 verifierReports 非空
+        for check_step in ['S4', 'P4']:
+            if check_step in engine_steps and engine_steps[check_step].get('status') == 'COMPLETED':
+                if not data.get('verifierReports'):
+                    issues.append(('block', f'Check 8 FAIL: 引擎 {check_step}=COMPLETED 但 verifierReports 为空'))
+        # 检查 feedback_rounds 一致性
+        engine_fb = engine.get('feedback_rounds', 0)
+        json_fb = data.get('feedbackRounds', 0)
+        if engine_fb != json_fb:
+            issues.append(('warn', f'Check 8 WARN: 引擎 feedback_rounds={engine_fb} 与 JSON feedbackRounds={json_fb} 不一致'))
+        print(f'[quality-gate] ✅ Check 8: 引擎状态与验收数据一致性检查完成')
+    except (json.JSONDecodeError, IOError) as e:
+        issues.append(('warn', f'Check 8 WARN: 引擎状态文件解析失败: {e}'))
+else:
+    print(f'[quality-gate] ℹ️  Check 8: 引擎未激活（无状态文件），跳过一致性检查')
+
 # ===== 汇总 =====
 block_issues = [i for i in issues if i[0] == 'block']
 warn_issues = [i for i in issues if i[0] == 'warn']

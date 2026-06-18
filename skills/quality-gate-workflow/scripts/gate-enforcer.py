@@ -1119,6 +1119,60 @@ class GateEngine:
             msg += f" | {len(warnings)} 个警告"
         return output_ok(msg, warnings=warnings, **result_data)
 
+    # ===== SELF-CHECK =====
+
+    def self_check(self):
+        """自检：从引擎状态构建步骤覆盖矩阵"""
+        if not self._ensure_state():
+            return output_block("引擎未初始化")
+
+        steps = self.state.get("steps", {})
+        coverage = {}
+        gaps = []
+        checkpoint_integrity = {"total": 0, "exist": 0}
+
+        for s, st in steps.items():
+            coverage[s] = st["status"]
+            if st["status"] == COMPLETED:
+                checkpoint_integrity["total"] += 1
+                safe_name = s.replace(".", "_")
+                cp_path = os.path.join(CHECKPOINT_DIR, f"{safe_name}.json")
+                if os.path.exists(cp_path):
+                    checkpoint_integrity["exist"] += 1
+                else:
+                    gaps.append(f"{s}: COMPLETED 但 checkpoint 缺失")
+            elif st["status"] == NOT_STARTED and not st.get("meta", {}).get("skip_reason"):
+                gaps.append(f"{s}: 未执行")
+
+        # 检查 verifier 派发
+        toolcall_steps = [s for s in steps if s in TOOLCALL_REQUIRED_STEPS]
+        for s in toolcall_steps:
+            st = steps.get(s, {})
+            tcid = st.get("meta", {}).get("toolCallId", "")
+            if st["status"] == COMPLETED and not tcid:
+                gaps.append(f"{s}: COMPLETED 但缺 toolCallId")
+
+        # 反馈回路状态
+        feedback_status = f"{self.state.get('feedback_rounds', 0)}/{self.state.get('max_feedback_rounds', 2)}"
+        code_feedback = self.state.get("code_feedback_rounds", 0)
+
+        completed_count = sum(1 for st in steps.values() if st["status"] == COMPLETED)
+        skipped_count = sum(1 for st in steps.values() if st["status"] == SKIPPED)
+        total = len(steps)
+
+        return output_ok(
+            f"自检完成: {completed_count}/{total} 步骤已完成, {skipped_count} 跳过, {len(gaps)} 缺口",
+            session_id=self.state["session_id"],
+            gate=self.state.get("gate"),
+            mode=self.state.get("mode"),
+            coverage=coverage,
+            gaps=gaps,
+            checkpoint_integrity=f"{checkpoint_integrity['exist']}/{checkpoint_integrity['total']}",
+            feedback_status=feedback_status,
+            code_feedback_rounds=code_feedback,
+            progress_pct=round((completed_count + skipped_count) / total * 100, 1) if total > 0 else 0,
+        )
+
     # ===== 辅助方法 =====
 
     def _suggest_anti_pattern(self, step, prereq):
@@ -1182,6 +1236,9 @@ def main():
     # resume
     subparsers.add_parser("resume", help="从文件恢复状态（compaction recovery）")
 
+    # self-check
+    subparsers.add_parser("self-check", help="自检：从引擎状态构建步骤覆盖矩阵")
+
     args = parser.parse_args()
 
     if not args.action:
@@ -1228,6 +1285,9 @@ def main():
 
     elif args.action == "resume":
         rc = engine.resume()
+
+    elif args.action == "self-check":
+        rc = engine.self_check()
 
     else:
         parser.print_help()
