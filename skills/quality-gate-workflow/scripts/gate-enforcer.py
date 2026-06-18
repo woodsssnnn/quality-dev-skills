@@ -526,12 +526,17 @@ class GateEngine:
         cp = {
             "schema_version": SCHEMA_VERSION,
             "session_id": self.state["session_id"],
+            "gate": self.state.get("gate", ""),
+            "mode": self.state.get("mode", "default"),
             "step": step,
+            "step_order": self._get_step_order(step),
             "status": step_state["status"],
             "timestamp": step_state.get("completed_at", now_iso()),
             "prerequisites_met": self._check_prereqs_snapshot(step),
             "artifacts": artifacts,
             "toolCallId": step_state.get("meta", {}).get("toolCallId"),
+            "feedback_rounds": f"{self.state.get('feedback_rounds', 0)}/{self.state.get('max_feedback_rounds', 2)}",
+            "meta": step_state.get("meta", {}),
             "checksum": f"sha256:{checksum}",
         }
         # 规范化 step 名用于文件名
@@ -548,6 +553,14 @@ class GateEngine:
             prereq_state = self.state.get("steps", {}).get(prereq, {})
             snapshot[prereq] = prereq_state.get("status", NOT_STARTED)
         return snapshot
+
+    def _get_step_order(self, step):
+        """获取步骤在序列中的序号（1-based）"""
+        steps = list(self.state.get("steps", {}).keys())
+        try:
+            return steps.index(step) + 1
+        except ValueError:
+            return 0
 
     # ===== .gate-state 兼容写入 =====
 
@@ -602,32 +615,62 @@ class GateEngine:
             if "--e2e" not in flag_set:
                 skips["S4.5"] = "no-e2e-flag"
 
+        # Debug 模式: 初始化时设置
+        if gate == "debug":
+            pass  # Debug 的 skip 由内容驱动
+
         return skips
 
     def _apply_content_driven_skips(self, meta):
-        """基于内容驱动的 skip（如 P1 complete 时声明 has_backend=false → SKIP P1.5）"""
+        """基于内容驱动的 skip"""
         if not meta:
             return []
         applied = []
         current_step = self.state.get("current_step")
+        steps = self.state.get("steps", {})
 
         # P1 complete 时：纯前端无 DB 变更 → SKIP P1.5
         if current_step == "P1" and meta.get("has_backend") is False:
-            if "P1.5" in self.state.get("steps", {}):
-                p15 = self.state["steps"]["P1.5"]
-                if p15["status"] == NOT_STARTED:
-                    p15["status"] = SKIPPED
-                    p15["meta"] = {"skip_reason": "纯前端需求，无 SQL/Mapper/Service/Liquibase 变更"}
-                    applied.append(("P1.5", "纯前端需求，无 DB 变更"))
+            if "P1.5" in steps and steps["P1.5"]["status"] == NOT_STARTED:
+                steps["P1.5"]["status"] = SKIPPED
+                steps["P1.5"]["meta"] = {"skip_reason": "纯前端需求，无 SQL/Mapper/Service/Liquibase 变更"}
+                applied.append(("P1.5", "纯前端需求，无 DB 变更"))
 
         # P1 complete 时：全新独立项目 → SKIP P1.6
         if current_step == "P1" and meta.get("is_greenfield") is True:
-            if "P1.6" in self.state.get("steps", {}):
-                p16 = self.state["steps"]["P1.6"]
-                if p16["status"] == NOT_STARTED:
-                    p16["status"] = SKIPPED
-                    p16["meta"] = {"skip_reason": "全新独立项目，无已有代码"}
-                    applied.append(("P1.6", "全新独立项目"))
+            if "P1.6" in steps and steps["P1.6"]["status"] == NOT_STARTED:
+                steps["P1.6"]["status"] = SKIPPED
+                steps["P1.6"]["meta"] = {"skip_reason": "全新独立项目，无已有代码"}
+                applied.append(("P1.6", "全新独立项目"))
+
+        # P1 complete 时：--bug 模式 + bug 描述明确 → SKIP P1.7
+        mode = self.state.get("mode", "")
+        if current_step == "P1" and mode == "bug" and meta.get("bug_clarity") == "clear":
+            if "P1.7" in steps and steps["P1.7"]["status"] == NOT_STARTED:
+                steps["P1.7"]["status"] = SKIPPED
+                steps["P1.7"]["meta"] = {"skip_reason": "bug 描述明确无歧义"}
+                applied.append(("P1.7", "bug 描述明确"))
+
+        # P1 complete 时：--opt 模式 + 无 PRD 变更 → SKIP P1.7
+        if current_step == "P1" and mode == "opt" and meta.get("no_prd_change") is True:
+            if "P1.7" in steps and steps["P1.7"]["status"] == NOT_STARTED:
+                steps["P1.7"]["status"] = SKIPPED
+                steps["P1.7"]["meta"] = {"skip_reason": "纯技术重构，无 PRD 变更"}
+                applied.append(("P1.7", "纯技术重构"))
+
+        # P2 complete 时：--bug 模式 + 修复行数 ≤10 → SKIP P2.5
+        if current_step == "P2" and mode == "bug" and meta.get("fix_lines", 999) <= 10:
+            if "P2.5" in steps and steps["P2.5"]["status"] == NOT_STARTED:
+                steps["P2.5"]["status"] = SKIPPED
+                steps["P2.5"]["meta"] = {"skip_reason": f"bug 修复 ≤10 行 ({meta.get('fix_lines')} 行)"}
+                applied.append(("P2.5", "bug 修复 ≤10 行"))
+
+        # S3 complete 时：无 SQL 变更 → SKIP S3.5
+        if current_step == "S3" and meta.get("has_sql") is False:
+            if "S3.5" in steps and steps["S3.5"]["status"] == NOT_STARTED:
+                steps["S3.5"]["status"] = SKIPPED
+                steps["S3.5"]["meta"] = {"skip_reason": "无 SQL 拼接变更"}
+                applied.append(("S3.5", "无 SQL 变更"))
 
         return applied
 
