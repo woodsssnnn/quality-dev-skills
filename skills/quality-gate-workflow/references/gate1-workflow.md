@@ -1,144 +1,8 @@
 # Gate 1 工作流详细步骤
 
-## 日志格式规范
+> 日志格式规范、平台标识、状态图标、复盘路径 → 见 SKILL.md "进度输出" 章节（唯一定义处）。
 
-**统一格式**：所有步骤必须使用以下结构化日志格式：
-
-```
-[qgw][{timestamp}][{platform}:{session_id}][{gate}][{step}/{total}] {status} {message}
-```
-
-| 字段 | 说明 | 示例 |
-|------|------|------|
-| `[qgw]` | 固定前缀 | `[qgw]` |
-| `{timestamp}` | ISO时间戳 | `2026-06-17T20:45:00` |
-| `{platform}` | 平台标识 | `mimo` / `claude` / `codex` / `opencode` |
-| `{session_id}` | 完整会话ID | `ses_12ca2c1c4ffe0S3HguaG7fosHN` |
-| `{gate}` | 阶段 | `gate1` / `gate2` / `analyze` |
-| `{step}/{total}` | 步骤进度 | `P1/5` / `S3/5` |
-| `{status}` | 状态图标 | ✅ / ❌ / ⚠️ / 🔄 / → |
-| `{message}` | 消息内容 | `解析需求完成: 99项可验证项` |
-
-**平台标识**：
-
-| 平台 | 标识 | 会话存储位置 | 类型 |
-|------|------|--------------|------|
-| MiMoCode | `mimo` | `~/.local/share/mimocode/memory/sessions/` | 国内 |
-| 通义灵码 | `tongyi` | `~/.local/share/tongyi/sessions/` | 国内 |
-| 豆包MarsCode | `marscode` | `~/.local/share/marscode/sessions/` | 国内 |
-| 百度Comate | `comate` | `~/.local/share/comate/sessions/` | 国内 |
-| CodeGeeX | `codegeex` | `~/.local/share/codegeex/sessions/` | 国内 |
-| Cursor | `cursor` | `~/.cursor/sessions/` | 国际 |
-| Claude Code | `claude` | `~/.claude/projects/{project-slug}/` | 国际 |
-| Codex | `codex` | `~/.codex/sessions/{year}/` | 国际 |
-| OpenCode | `opencode` | `~/.opencode/sessions/` | 国际 |
-
-**状态图标**：
-- ✅ 步骤完成
-- ❌ 步骤失败
-- ⚠️ 警告/发现ISSUE
-- 🔄 步骤进行中
-- → 步骤开始/转移
-
-**示例**：
-```bash
-[qgw][2026-06-17T20:45:00][mimo:ses_12ca2c1c4ffe0S3HguaG7fosHN][gate1][P0/5] → 工作空间检查
-[qgw][2026-06-17T20:45:05][mimo:ses_12ca2c1c4ffe0S3HguaG7fosHN][gate1][P1/5] ✅ 解析需求完成: 99项可验证项, 5个unit
-[qgw][2026-06-17T20:45:30][mimo:ses_12ca2c1c4ffe0S3HguaG7fosHN][gate1][STATS] 📊 总耗时: 30s | 步骤: 5/5 | 通过率: 100%
-```
-
-**复盘路径**：
-```bash
-# MiMoCode会话
-cat ~/.local/share/mimocode/memory/sessions/{session_id}/checkpoint.md
-
-# Claude Code会话
-cat ~/.claude/projects/{project-slug}/conversations/{session-id}.json
-
-# Codex会话
-cat ~/.codex/sessions/2026/{session-id}/history.json
-
-# 国内平台
-cat ~/.local/share/tongyi/sessions/{session_id}/checkpoint.md    # 通义灵码
-cat ~/.local/share/marscode/sessions/{session_id}/checkpoint.md  # 豆包MarsCode
-cat ~/.local/share/comate/sessions/{session_id}/checkpoint.md    # 百度Comate
-```
-
-## 5问题重启测试
-
-借鉴 planning-with-files，会话恢复时必须通过5问题测试：
-
-| 问题 | 答案来源 | 验证方式 |
-|------|----------|----------|
-| **我在哪？** | 当前阶段 | `docs/QGW-INDEX.md` Active Sessions |
-| **我要去哪？** | 剩余阶段 | Plan文档的Phase列表 |
-| **目标是什么？** | 需求目标 | Plan文档的Goal声明 |
-| **学到了什么？** | 发现和决策 | `docs/verification/*.json` |
-| **做了什么？** | 执行记录 | `docs/sessions/*.md` |
-
-**执行时机**：
-- 会话启动时（on-session-start hook）
-- /clear 恢复后
-- context compaction 后
-- 长时间暂停后恢复
-
-**验证失败处理**：
-- 无法回答任一问题 → 输出 `[qgw] ⚠️ 会话状态不完整，需要重新加载`
-- 自动尝试从文件恢复
-- 恢复失败 → 提示用户手动恢复
-
-## 2-Action Rule
-
-借鉴 planning-with-files，每2次view/search操作后必须更新文件：
-
-```markdown
-操作1: Grep搜索 → 记录发现
-操作2: Read文件 → 必须更新 findings
-操作3: Glob搜索 → 记录发现
-操作4: Grep搜索 → 必须更新 findings
-```
-
-**适用场景**：
-- P1.5 数据库调查
-- P1.6 代码链路调查
-- Gate 2 代码实现
-
-**执行方式**：
-- 每2次操作后自动提醒
-- 更新对应的verification JSON或session summary
-- 防止信息丢失
-
-## 3-Strike Error Protocol
-
-借鉴 planning-with-files，错误处理必须遵循3次尝试协议：
-
-```markdown
-尝试1: 诊断并修复
-  → 仔细阅读错误信息
-  → 识别根因
-  → 应用针对性修复
-
-尝试2: 替代方法
-  → 相同错误？尝试不同方法
-  → 不同工具？不同库？
-  → 绝不重复完全相同的操作
-
-尝试3: 重新思考
-  → 质疑假设
-  → 搜索解决方案
-  → 考虑更新计划
-
-3次失败后: 升级给用户
-  → 解释尝试了什么
-  → 分享具体错误
-  → 请求指导
-```
-
-**执行规则**：
-- 错误必须记录到Plan文档的Errors Encountered表
-- 每次尝试必须记录到progress.md
-- 3次失败后必须停止并报告用户
-- 禁止静默跳过错误
+> 通用工作协议（5问题重启测试、2-Action Rule、3-Strike Protocol）→ 见 [references/general-protocols.md](general-protocols.md)。
 
 ---
 
@@ -191,36 +55,7 @@ mkdir -p docs/plans docs/verification docs/reports docs/sessions
 
 ## --lite 轻量快速通道
 
-当用户指定 `--lite` 参数时，Gate 1 流程简化为 P1→P2→P4→P5，跳过 P1.5/P1.6/P1.7。
-
-### 适用条件（必须全部满足）
-
-- 单文件/单函数改动（不涉及跨文件依赖）
-- 纯前端且无 DB 变更，或 bug fix 改动 ≤3 处
-- 无架构决策（单 unit、无共享组件修改）
-
-### 跳过步骤
-
-| 步骤 | 跳过原因 |
-|------|---------|
-| P1.5 DB 调查 | 改动不涉及 SQL/Mapper/Service |
-| P1.6 代码链路调查 | 单文件改动，无需跨层 grep |
-| P1.7 PM 顾问 | 改动明确，无业务歧义风险 |
-
-### 保留步骤
-
-| 步骤 | 说明 |
-|------|------|
-| P1 | 仍需提取可验证项（具体、可追溯 §X.X） |
-| P2 | 仍需撰写 plan（What/Where/How） |
-| P4 | 仍需独立 verifier 验证 plan ↔ PRD 一致性 |
-| P5 | 仍需持久化验收清单 |
-
-### 日志输出
-
-```
-[qgw:gate1:P1-check] --lite 模式: P1.5=跳过(lite) | P1.6=跳过(lite) | P1.7=跳过(lite)
-```
+引擎 `init --lite` 自动设置 skip 矩阵，跳过 P1.5/P1.6/P1.7。适用条件见 SKILL.md 修饰参数表。流程简化为 P1→P2→P4→P5，保留步骤的语义要求不变。
 
 ---
 
@@ -644,31 +479,11 @@ P1.7 完成后，验收清单 JSON 的 `verifierReports` 数组追加一条：
 
 ---
 
-## P1 出口检查点（进入 P2 前必须执行）
+## P1 出口检查点（虚拟步骤，引擎自动 guard 聚合）
 
-> 输出: `[qgw:gate1:P1-check] P1-check: P1.5={执行|跳过} P1.6={执行|跳过} P1.7={执行|跳过}`
+**引擎**: `enter P1-check` → 引擎自动验证 P1.5/P1.6/P1.7 决策状态（COMPLETED 或 SKIPPED+skip_reason）→ `complete P1-check`
 
-**引擎交互**（必须）：
-- `python gate-enforcer.py enter P1-check` → 引擎自动验证 P1.5/P1.6/P1.7 的决策状态（已执行=COMPLETED / 已跳过=SKIPPED+skip_reason）
-- `python gate-enforcer.py complete P1-check` → 引擎写入 checkpoint
-
-> 此步骤是虚拟步骤，不做语义工作，只做确定性 guard 聚合检查。
-> 无此步骤的 complete = P1.5/P1.6/P1.7 被静默跳过，引擎会 BLOCK P2 的进入。
-
-在进入 P2 前，**必须**输出此检查点日志。格式：
-
-```
-[qgw:gate1:P1-check] P1.5: {执行|跳过(理由)} | P1.6: {执行|跳过(理由)} | P1.7: {执行|跳过(理由)}
-```
-
-**跳过理由仅限以下**：
-- P1.5 跳过: "纯前端需求，无 SQL/Mapper/Service/Liquibase 变更" 或 "--lite 模式"
-- P1.6 跳过: "全新独立项目，无已有代码"（注意：在已有项目中纯新增功能**不能**跳过，必须匹配已有 pattern）或 "--lite 模式"
-- P1.7 跳过: 仅 `--opt` 纯技术重构 或 `--bug` 且 bug 描述明确无歧义（D1/D3 仍需检查）或 "--lite 模式"
-
-**`--opt` / `--bug` / `--prd` 模式均不自动跳过 P1.5 / P1.6 / P1.7**。判断依据是 P1 可验证项内容，不是模式参数。
-
-**禁止**：无此日志直接进入 P2。缺少此日志 = P1.5/P1.6/P1.7 被静默跳过，违反 anti-pattern #12、#22、#25。
+> 不做语义工作。未完成此步骤 = 引擎 BLOCK P2。skip 理由由引擎 skip_matrix 管理，不需手动记忆。
 
 ---
 
@@ -966,36 +781,15 @@ P2.5 完成后，验收清单 JSON 的 `verifierReports` 数组追加一条：
 
 > 输出: `[qgw:gate1:P4] 派独立 verifier 子代理 (round N)` / `✅ 全部 COVERED` 或 `❌ N 项 MISSING → 修 plan → 重验`
 
-**引擎交互**（必须）：
-- 开始前: `python gate-enforcer.py enter P4`
-- 完成后: `python gate-enforcer.py complete P4 --toolCallId "Agent|P4|ISO-timestamp"` → **引擎强制检查 toolCallId 非空且格式有效**，否则 BLOCK
-- 失败时: `python gate-enforcer.py fail P4 --reason "..." --rootCause CODE|PLAN`
+**引擎**: `enter P4` → [语义工作：派子代理验证] → `complete P4 --toolCallId "Agent|P4|ISO-timestamp"` → 引擎强制校验格式，否则 BLOCK。失败时: `fail P4 --reason "..." --rootCause CODE|PLAN`
 
-自验 100% 通过后，派子代理独立验证。详细 prompt 模板见 `verifier-templates.md`。
+详细 prompt 模板见 `verifier-templates.md`。**必须通过 Task/Agent 工具派发子代理**，禁止仅输出日志。子代理 prompt 必须包含：
+1. 可验证项（含 P1.6 补充项）+ 需求/Plan 文档位置
+2. 逐项报告 COVERED / MISSING / PARTIAL + 证据
+3. Dev-rule 模式覆盖检查（如有）
+4. 完整性抽查：从 PRD 独立提取 2-3 个关键词 grep 代码库，检查 Plan 覆盖
 
-**硬性要求：必须通过 `Task` 或 `Agent` 工具调用派发子代理。禁止仅输出日志文本而不实际派发。**
-
-子代理 prompt 必须包含：
-1. 可验证项（P1 提取的，含 P1.6 补充项）
-2. 需求文档位置
-3. Plan 文档位置
-4. 指令：逐项报告 COVERED / MISSING / PARTIAL + 证据
-5. **Dev-rule 模式覆盖检查**（如果项目声明了 `dev_rule_path` 或 `gate_dev_rules`）：verifier 检查每个 plan unit 是否指定了正确的架构模式，模式选择是否符合 dev-rule 的 patterns 索引推荐
-6. **完整性抽查**：verifier 从 PRD 中独立提取 2-3 个技术关键词，grep 代码库找到对应调用点，检查这些调用点是否被 Plan 覆盖。未覆盖 → MISSING（不等 P1 的可验证项列表）
-
-**派发自检**：P4 完成后、进入 P5 前，确认本步骤确实产生了 `Task` 或 `Agent` 工具调用。如果工具调用失败（权限拒绝、子代理报错），输出 `[qgw:gate1:P4] ❌ 子代理派发失败` 并报告用户，禁止静默跳过。
-
-**物证链写入**：verifier 验证后（无论 PASS 或 FAIL），将本次工具调用记录写入验收清单 JSON：
-
-1. 在 `verifierReports` 数组中追加一条记录，包含 `round`、`timestamp`、`result`、`toolCallId`
-2. `toolCallId` 格式：`"Agent|round{N}|{ISO-timestamp}"`（如 `"Agent|round2|2026-06-10T21:15:00"`）。禁止纯描述占位符（如 `"verifier"`、`"round1"`）。**禁止使用 `"main|"` 前缀**——P4 的 Writer≠Verifier 原则要求必须是独立子代理派发，主代理自验不算 P4 执行
-3. `result` 为 FAIL 时，`failItems` 必须列出具体失败项 ID（如 `["V2.3", "V2.4"]`），禁止空数组
-4. 在每个 PASS 的 item 下设置 `toolCallId` 为本次 toolCallId 值
-5. 输出 `[qgw:gate1:P4] ✅ 物证链已写入: {toolCallId}`
-6. **FAIL 或 PARTIAL 后触发 evolve**：首次 FAIL/PARTIAL 后立即创建 `docs/verification/error-patterns.json`，记录根因分类（CODE/PLAN）。不等 Unit 完成
-7. **无 toolCallId → 校验不通过，禁止进入 P5**
-
-> `toolCallId` 防止代理仅输出日志文本冒充 P4 执行。`--self` 自检时交叉验证 JSONL 中的实际 Agent/Task 工具调用。
+物证链写入：将 `toolCallId`（格式由引擎校验）写入 `verifierReports` 和每个 PASS item。FAIL 时 `failItems` 必须列出具体 ID。FAIL/PARTIAL 后触发 evolve。无 toolCallId → 引擎禁止进入 P5。
 
 ---
 

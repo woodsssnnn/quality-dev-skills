@@ -354,6 +354,7 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 | [references/constitution-template.md](references/constitution-template.md) | Gate 1 constitution 模板 |
 | [evaluations/](evaluations/) | Skill 效果评估框架 |
 | [scripts/gate-enforcer.py](scripts/gate-enforcer.py) | 确定性执行引擎（步骤状态机 + Guard 检查） |
+| [references/general-protocols.md](references/general-protocols.md) | 通用工作协议（5问题重启测试、2-Action Rule、3-Strike Protocol） |
 
 ## 版本记录
 

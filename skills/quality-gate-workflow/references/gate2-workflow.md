@@ -1,58 +1,6 @@
 # Gate 2 工作流详细步骤
 
-## 日志格式规范
-
-**统一格式**：所有步骤必须使用以下结构化日志格式：
-
-```
-[qgw][{timestamp}][{platform}:{session_id}][{gate}][{step}/{total}] {status} {message}
-```
-
-| 字段 | 说明 | 示例 |
-|------|------|------|
-| `[qgw]` | 固定前缀 | `[qgw]` |
-| `{timestamp}` | ISO时间戳 | `2026-06-17T20:45:00` |
-| `{platform}` | 平台标识 | `mimo` / `claude` / `codex` / `opencode` |
-| `{session_id}` | 完整会话ID | `ses_12ca2c1c4ffe0S3HguaG7fosHN` |
-| `{gate}` | 阶段 | `gate1` / `gate2` / `analyze` |
-| `{step}/{total}` | 步骤进度 | `P1/5` / `S3/5` |
-| `{status}` | 状态图标 | ✅ / ❌ / ⚠️ / 🔄 / → |
-| `{message}` | 消息内容 | `实现Unit完成: 12项可验证项` |
-
-**平台标识**：
-
-| 平台 | 标识 | 会话存储位置 |
-|------|------|--------------|
-| MiMoCode | `mimo` | `~/.local/share/mimocode/memory/sessions/` |
-| Claude Code | `claude` | `~/.claude/projects/{project-slug}/` |
-| Codex | `codex` | `~/.codex/sessions/{year}/` |
-| OpenCode | `opencode` | `~/.opencode/sessions/` |
-
-**状态图标**：
-- ✅ 步骤完成
-- ❌ 步骤失败
-- ⚠️ 警告/发现ISSUE
-- 🔄 步骤进行中
-- → 步骤开始/转移
-
-**示例**：
-```bash
-[qgw][2026-06-17T20:45:00][mimo:ses_12ca2c1c4ffe0S3HguaG7fosHN][gate2][S0/5] → 工作空间检查
-[qgw][2026-06-17T20:45:05][mimo:ses_12ca2c1c4ffe0S3HguaG7fosHN][gate2][S1/5] ✅ 提取验收标准完成: 12条标准
-[qgw][2026-06-17T20:45:30][mimo:ses_12ca2c1c4ffe0S3HguaG7fosHN][gate2][STATS] 📊 总耗时: 30s | 步骤: 5/5 | 通过率: 100%
-```
-
-**复盘路径**：
-```bash
-# MiMoCode会话
-cat ~/.local/share/mimocode/memory/sessions/{session_id}/checkpoint.md
-
-# Claude Code会话
-cat ~/.claude/projects/{project-slug}/conversations/{session-id}.json
-
-# Codex会话
-cat ~/.codex/sessions/2026/{session-id}/history.json
-```
+> 日志格式规范、平台标识、状态图标、复盘路径 → 见 SKILL.md "进度输出" 章节（唯一定义处）。
 
 ## 目录
 - Step 0：工作空间初始化
@@ -297,40 +245,15 @@ SELECT TYPE, ITEM_ID FROM some_table LIMIT 1;
 
 > 输出: `[qgw:gate2:S4] 派独立 verifier 子代理 (round N)` / `✅ 全部 PASS` 或 `❌ N 项 FAIL — 根因: CODE / PLAN`
 
-**引擎交互**（必须）：
-- 开始前: `python gate-enforcer.py enter S4`
-- 完成后: `python gate-enforcer.py complete S4 --toolCallId "Agent|S4|ISO-timestamp"` → **引擎强制检查 toolCallId 非空且格式有效**，否则 BLOCK
-- 失败时: `python gate-enforcer.py fail S4 --reason "..." --rootCause CODE|PLAN`
+**引擎**: `enter S4` → [语义工作：派子代理验证] → `complete S4 --toolCallId "Agent|S4|ISO-timestamp"` → 引擎强制校验格式，否则 BLOCK。失败时: `fail S4 --reason "..." --rootCause CODE|PLAN`
 
-自验 100% 通过后，派子代理。详细 prompt 模板见 `references/verifier-templates.md`。
+详细 prompt 模板见 `references/verifier-templates.md`。**必须通过 Task/Agent 工具派发子代理**，禁止仅输出日志。子代理 prompt 必须包含：
+1. 验收标准 + 需求/代码位置
+2. 逐项报告 PASS/FAIL + 证据 + Code Refs
+3. Dev rule 合规检查（如有）
+4. 数据库 Schema 抽检（后端，不可用时 SKIP）
 
-**硬性要求：必须通过 `Task` 或 `Agent` 工具调用派发子代理。禁止仅输出日志文本而不实际派发。**
-
-没有实际的 Task/Agent 工具调用 = S4 未执行 = 禁止进入 S5。
-
-子代理 prompt 必须包含：
-
-1. 验收标准（Step 1 提取的）
-2. 源需求文档位置
-3. 实现代码位置
-4. 指令：逐项报告 PASS/FAIL + 证据 + **Code Refs**（PASS 项的 file:lines + description，用于写入 verification JSON 的 codeRefs 字段）
-5. Dev rule 合规检查（如果 CLAUDE.md 声明了 `dev_rule_path` 或 `gate_dev_rules`）
-6. **数据库 Schema 抽检**（后端代码时）：verifier 从代码中随机抽取 2-3 处列名引用，通过 DB MCP 执行 `SHOW COLUMNS` 验证列存在。每处报告 PASS/FAIL + 表名 + 列名。不可用时跳过，报告 SKIP。
-
-**Dev rule 前检**：派 verifier 前确认声明的每个 dev-rule 技能文件存在（`~/.agents/skills/{name}/SKILL.md` 或 `~/.claude/skills/{name}/SKILL.md` 或 `.claude/skills/{name}/SKILL.md`）。不存在 → 输出 `[qgw:gate2:S4] ⚠️ {name} 不存在，降级为仅检查验收标准`。禁止静默跳过。
-
-**派发自检**：S4 完成后、进入 S5 前，确认本步骤确实产生了 `Task` 或 `Agent` 工具调用。工具调用失败 → 输出 `[qgw:gate2:S4] ❌ 子代理派发失败` 并报告用户，禁止静默跳过。
-
-**物证链写入**：verifier 验证后（无论 PASS 或 FAIL），将本次工具调用记录写入验收清单 JSON：
-
-1. 在 `verifierReports` 追加记录（含 `round`、`timestamp`、`result`、`toolCallId`），在 `toolCalls` 数组追加记录
-2. `toolCallId` 格式：`"Agent|round{N}|{ISO-timestamp}"`（如 `"Agent|round2|2026-06-10T21:15:00"`）。禁止纯描述占位符（如 `"verifier"`、`"round1"`）。**禁止使用 `"main|"` 前缀**——S4 的 Writer≠Verifier 原则要求必须是独立子代理派发，主代理自验不算 S4 执行
-3. `result` 为 FAIL 时，`failItems` 必须列出具体失败项 ID，禁止空数组
-4. 在每个 PASS item 下设 `toolCallId` 为本次 toolCallId 值，并写入 `codeRefs`（从 verifier 输出的 Code Refs 提取）
-5. 输出 `[qgw:gate2:S4] ✅ 物证链已写入: {toolCallId}`
-6. **FAIL 或 PARTIAL 后触发 evolve**：首次 FAIL/PARTIAL 后立即创建 `docs/verification/error-patterns.json`，记录根因分类（CODE/PLAN）。不等 Unit 完成
-7. **BUG 记录**：每轮 S4 修复（CODE 或 PLAN 根因）都应记录 BUG ID + 类型 + 根因 + 修复描述，供 Session Summary 的 Bug Log 章节使用（反模式 #34）
-8. **无 toolCallId → 禁止进入 S5**
+物证链写入：将 `toolCallId`（格式由引擎校验）写入 `verifierReports` 和每个 PASS item 的 `codeRefs`。FAIL 时 `failItems` 必须列出具体 ID。FAIL/PARTIAL 后触发 evolve + BUG 记录。无 toolCallId → 引擎禁止进入 S5。
 
 **根因分类**：
 
@@ -501,40 +424,13 @@ SELECT TYPE, ITEM_ID FROM some_table LIMIT 1;
 
 > 输出: `[qgw][{timestamp}][{platform}:{session_id}][gate2][S5/5] ✅ Unit N/M 提交`
 
-**引擎交互**（必须）：
-- 开始前: `python gate-enforcer.py enter S5` → 引擎检查 S4=COMPLETED 且 toolCallId 存在
-- 完成后: `python gate-enforcer.py complete S5` → 引擎验证 toolCallId 完整、codeRefs 存在、Plan 已更新
+**引擎**: `enter S5` → 引擎检查 S4=COMPLETED 且 toolCallId 存在 → [语义工作：写入 verification JSON + commitSha + Git Trailer + 更新 Plan/Index/Session] → `complete S5` → 引擎验证 toolCallId 完整、codeRefs 存在、Plan 已更新
 
-**S4 前置检查**：进入 S5 前，必须通过以下检查：
+> 引擎 `complete S5` 自动检查：物证链完整性、Plan 同步、codeRefs 存在、session summary 写入。不满足则 BLOCK。
 
-### 检查1: 物证链完整性
-- 存在空 `toolCallId` → `[qgw] ❌ 存在未经验证的 item (toolCallId 为空) — 返回 S4 补验`
-- 无工具调用记录 → `[qgw] ❌ 物证链缺失 — S4 未通过 Task/Agent 工具实际执行`
-- PASS 项无 `codeRefs` → `[qgw] ❌ 可追溯性断裂 — 返回 S4 补充 codeRefs`（反模式 #30）
+**提交顺序**：先验证再提交。验证结果写入 `docs/verification/unit-{N}.json`。提交后写入 `commitSha`。
 
-### 检查2: Plan文档同步
-- Plan文档未更新 → `[qgw] ❌ Plan文档未同步 — 必须更新Task状态和实现记录`
-- 验证项状态不一致 → `[qgw] ❌ Plan与verification不同步 — 必须对齐`
-
-### 检查3: 5问题重启测试
-- 无法回答"我在哪" → `[qgw] ⚠️ 会话状态不完整，需要重新加载`
-- 无法回答"目标是什么" → `[qgw] ⚠️ 目标丢失，需要重新确认`
-
-### 检查4: 错误记录完整性
-- 存在未记录的错误 → `[qgw] ❌ 错误未记录到Plan文档 — 必须补充错误日志`
-- 3次尝试未升级 → `[qgw] ⚠️ 违反3-Strike协议 — 必须报告用户`
-
-**上述任一条件不满足 → 禁止提交**
-
-**提交顺序**：先验证再提交。验证不通过禁止提交。禁止在 verifier 未实际执行（无工具调用）的情况下提交。
-
-**验证结果写入结构化 JSON**（`references/acceptance-criteria-schema.json` 格式）。每个 Unit 通过 S5 后**必须**使用 `Write` 工具写入 `docs/verification/unit-{N}.json`。compaction 后可从文件恢复。
-
-**提交后写入 commitSha**：git commit 后，读取最新 commit SHA，写入每个 PASS item 的 `commitSha` 字段。
-
-**Git Trailer 生成**（反模式 #40）：
-
-提交时在 commit message 末尾追加 QGW trailer（空行后 + trailer 行）：
+**Git Trailer**（反模式 #40）：提交时追加 QGW trailer：
 
 ```
 QGW-Gate: gate2
