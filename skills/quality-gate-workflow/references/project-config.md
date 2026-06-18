@@ -38,9 +38,26 @@
   "overrides": {
     "advisor_pm": ".qgw/templates/advisor-pm.md",
     "verifier_gate2": ".qgw/templates/verifier-gate2.md"
+  },
+  "engine": {
+    "enabled": true,
+    "strict_mode": true,
+    "state_file": "docs/.qgw-engine-state.json",
+    "checkpoint_dir": "docs/.qgw-checkpoints"
   }
 }
 ```
+
+### engine 配置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `enabled` | bool | `true` | 是否启用确定性执行引擎。设为 `false` 则跳过所有 gate-enforcer 调用（纯 prompt 模式） |
+| `strict_mode` | bool | `true` | 严格模式下，引擎 BLOCK 时禁止继续。关闭后仅警告 |
+| `state_file` | string | `docs/.qgw-engine-state.json` | 引擎状态文件路径 |
+| `checkpoint_dir` | string | `docs/.qgw-checkpoints` | 步骤 checkpoint 文件目录 |
+
+> 引擎配置也可通过环境变量覆盖：`QGW_ENGINE_ENABLED=false`、`QGW_ENGINE_STATE=custom/path.json`
 
 ## Preset 预设包
 

@@ -132,3 +132,7 @@
 
 53. Report 未注册到 `reports/INDEX.md` 和 `QGW-INDEX.md`。未索引的报告是不可发现的生命周期断点，无法被 `--self` 或 `--analyze` 追踪。
 54. 文档变更无下游传播。修改文档后必须按变更传播规则 (CP-1~CP-5) 更新下游依赖文档，禁止孤立修改。详见 `references/change-propagation.md`。
+
+## 确定性执行引擎
+
+58. gate-enforcer 返回 BLOCK 时继续执行。引擎的前置检查是确定性的 if-else，BLOCK 意味着前置条件未满足（步骤顺序错误、产出物缺失、toolCallId 缺失或格式无效）。绕过引擎 = 流程无效。必须修复问题后重试 `enter <step>`，禁止跳过引擎调用或忽略 BLOCK 输出。

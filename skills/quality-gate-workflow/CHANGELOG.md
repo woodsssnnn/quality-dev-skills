@@ -2,6 +2,32 @@
 
 All notable changes to quality-gate-workflow will be documented in this file.
 
+## [0.7.0.0] - 2026-06-18
+
+### Added - 确定性执行引擎（Gate Enforcer）
+- `gate-enforcer.py`：Python 状态机 + Guard 检查，将步骤顺序/产出物检查/toolCallId 验证从 prompt 指令提升为 if-else 机械强制
+- 三层架构：LLM 语义层 + Gate Enforcer 状态机层 + 基础设施层（现有 hook/schema）
+- 6 个命令接口：`init` / `enter` / `complete` / `fail` / `status` / `resume`
+- Guard 转换规则：每步骤前置条件 if-else 硬检查，LLM 无法绕过
+- toolCallId 格式强制验证：`Agent|<step>|ISO-timestamp`，禁止 `main|` 前缀
+- Skip 矩阵：`--lite` 跳过 P1.5/P1.6/P1.7 由引擎 init 时确定，持久化后不可更改
+- 内容驱动 skip：P1 complete 时 `has_backend=false` → 自动 SKIP P1.5
+- P1-check 虚拟步骤：不做语义工作，只做 P1.5/P1.6/P1.7 决策状态聚合检查
+- Checkpoint 文件写入：每步骤完成时写入 `docs/.qgw-checkpoints/<step>.json`
+- 状态持久化：`docs/.qgw-engine-state.json`，可被 `--self` 和 `health-check.sh` 读取
+- `.gate-state` 兼容写入：与现有 `verify-checkpoint.sh` 共存
+- `health-check.sh` 第 13 项检查：引擎状态文件存在性和进度一致性
+- `project-config.md` 新增 `engine` 配置节：`enabled` / `strict_mode` / `state_file` / `checkpoint_dir`
+- 反模式 #58：gate-enforcer BLOCK 时禁止继续执行
+- SKILL.md 新增红线 + 合理化借口表条目
+
+### Changed
+- 反模式规则 57 → 58 条（新增 #58）
+- Gate 1/Gate 2 每个步骤追加引擎交互指令（`enter` / `complete`）
+- Debug 模式 D1-D4 追加引擎交互指令
+
+---
+
 ## [0.6.0.0] - 2026-06-18
 
 ### Added - 文档全生命周期管理系统

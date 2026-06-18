@@ -147,6 +147,10 @@ cat ~/.local/share/comate/sessions/{session_id}/checkpoint.md    # 百度Comate
 > 输出: `[qgw][{timestamp}][{session_id}][gate1][P0/5] → 工作空间检查 ...`
 > 完成: `[qgw][{timestamp}][{session_id}][gate1][P0/5] ✅ 目录就绪` 或 `✅ 已创建`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P0` → 必须收到 `ALLOW`
+- 完成后: `python gate-enforcer.py complete P0` → 引擎验证目录已创建
+
 检查并创建工作空间目录（如果不存在）：
 
 ```bash
@@ -224,6 +228,10 @@ mkdir -p docs/plans docs/verification docs/reports docs/sessions
 
 > 输出: `[qgw][{timestamp}][{session_id}][gate1][P1/5] → 解析需求 → 提取可验证项 ...`
 > 完成: `[qgw][{timestamp}][{session_id}][gate1][P1/5] ✅ 解析需求完成: N项可验证项, M个unit`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P1` → 必须收到 `ALLOW`
+- 完成后: `python gate-enforcer.py complete P1 --meta '{"has_backend": true|false, "is_greenfield": true|false}'` → 引擎根据 meta 自动处理 P1.5 skip
 
 重读需求文档，提取每个可验证的字段级规格。每项必须具体、可追溯、可测试。**每个可验证项必须追溯到 PRD 具体 §X.X 章节**，禁止无引用的断言。
 
@@ -329,6 +337,10 @@ Source: [PRD路径 / bug描述]
 ## P1.5：数据库调查（后端专属）
 
 > 输出: `[qgw:gate1:P1.5] 数据库调查 ...` / `✅ N 张表, M 个枚举域已确认` 或 `⚠️ DB MCP 不可用, 跳过`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P1.5` → 收到 `ALLOW` 或 `SKIP`（SKIP 时直接跳过此步）
+- 完成后: `python gate-enforcer.py complete P1.5`
 
 **前置条件**：需求涉及后端开发（SQL/Mapper/Service）或数据库变更（Liquibase changelog/DML）。纯前端且无 DB 变更的需求跳过此步。
 
@@ -447,6 +459,10 @@ LIMIT 10;
 
 > 输出: `[qgw:gate1:P1.6] 代码链路调查 ...` / `✅ N 个调用点, M 种分类, K 个补充项`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P1.6` → 收到 `ALLOW` 或 `SKIP`
+- 完成后: `python gate-enforcer.py complete P1.6`
+
 **适用范围**：所有需求（新增/替换/重构/修复），禁止跳过。"纯新增不需要调查"是错误判断——新增也需要匹配已有 pattern 和确认无冲突。
 
 ### A. 关键词 → 代码定位
@@ -531,6 +547,10 @@ Source: [需求路径]
 ## P1.7：PM 顾问评议
 
 > 输出: `[qgw:gate1:P1.7] 派 PM 顾问评议可验证项 ...` / `✅ 0 ISSUE` 或 `⚠️ N ISSUE → 修 P1`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P1.7` → 收到 `ALLOW` 或 `SKIP`
+- 完成后: `python gate-enforcer.py complete P1.7 --toolCallId "Agent|P1.7|ISO-timestamp"` → 引擎验证 toolCallId 格式
 
 P1.6 完成后、P2 撰写 plan 前，派独立 PM 顾问子代理评议 P1 输出的可验证项列表。详细 prompt 模板见 `advisor-templates.md` 的 "P1.7 PM 顾问" 章节。
 
@@ -626,7 +646,14 @@ P1.7 完成后，验收清单 JSON 的 `verifierReports` 数组追加一条：
 
 ## P1 出口检查点（进入 P2 前必须执行）
 
-> 输出: `[qgw:gate1:P1-check] P1.5={执行|跳过} P1.6={执行|跳过}`
+> 输出: `[qgw:gate1:P1-check] P1-check: P1.5={执行|跳过} P1.6={执行|跳过} P1.7={执行|跳过}`
+
+**引擎交互**（必须）：
+- `python gate-enforcer.py enter P1-check` → 引擎自动验证 P1.5/P1.6/P1.7 的决策状态（已执行=COMPLETED / 已跳过=SKIPPED+skip_reason）
+- `python gate-enforcer.py complete P1-check` → 引擎写入 checkpoint
+
+> 此步骤是虚拟步骤，不做语义工作，只做确定性 guard 聚合检查。
+> 无此步骤的 complete = P1.5/P1.6/P1.7 被静默跳过，引擎会 BLOCK P2 的进入。
 
 在进入 P2 前，**必须**输出此检查点日志。格式：
 
@@ -648,6 +675,10 @@ P1.7 完成后，验收清单 JSON 的 `verifierReports` 数组追加一条：
 ## P2：撰写/审查计划
 
 > 输出: `[qgw:gate1:P2] 撰写计划 ...` / `✅ N 个 plan unit`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P2` → 必须收到 `ALLOW`（引擎检查 P1-check=COMPLETED）
+- 完成后: `python gate-enforcer.py complete P2 --artifacts docs/plans/*.md`
 
 ### 分层文档结构
 
@@ -834,6 +865,10 @@ docs/plans/
 
 > 输出: `[qgw:gate1:P2.5] 派架构师顾问评议 plan ...` / `✅ 0 ISSUE` 或 `⚠️ N ISSUE → 修 plan`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P2.5` → 收到 `ALLOW` 或 `SKIP`
+- 完成后: `python gate-enforcer.py complete P2.5 --toolCallId "Agent|P2.5|ISO-timestamp"` → 引擎验证 toolCallId 格式
+
 P2 撰写完 plan 后、P3 自验前，派独立架构师顾问子代理评议 plan 的架构合理性。详细 prompt 模板见 `advisor-templates.md` 的 "P2.5 架构师顾问" 章节。
 
 ### 为什么需要架构师顾问（不是 verifier）
@@ -912,6 +947,10 @@ P2.5 完成后，验收清单 JSON 的 `verifierReports` 数组追加一条：
 
 > 输出: `[qgw:gate1:P3] 自验计划完整性 ...` / `✅ 全部覆盖` 或 `❌ N 项缺口 → 修复中`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P3`
+- 完成后: `python gate-enforcer.py complete P3`
+
 逐条检查：
 - **Covered**：引用可验证项 + 引用 plan 章节 + 确认匹配
 - **Missing**：引用可验证项 + plan 中应出现的位置
@@ -926,6 +965,11 @@ P2.5 完成后，验收清单 JSON 的 `verifierReports` 数组追加一条：
 ## P4：独立 verifier 子代理
 
 > 输出: `[qgw:gate1:P4] 派独立 verifier 子代理 (round N)` / `✅ 全部 COVERED` 或 `❌ N 项 MISSING → 修 plan → 重验`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P4`
+- 完成后: `python gate-enforcer.py complete P4 --toolCallId "Agent|P4|ISO-timestamp"` → **引擎强制检查 toolCallId 非空且格式有效**，否则 BLOCK
+- 失败时: `python gate-enforcer.py fail P4 --reason "..." --rootCause CODE|PLAN`
 
 自验 100% 通过后，派子代理独立验证。详细 prompt 模板见 `verifier-templates.md`。
 
@@ -958,6 +1002,10 @@ P2.5 完成后，验收清单 JSON 的 `verifierReports` 数组追加一条：
 ## P5：通过 → 移交 Gate 2
 
 > 输出: `[qgw:gate1:P5] → 验收清单持久化 → 移交 Gate 2`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter P5` → 引擎检查 P4=COMPLETED 且 toolCallId 存在
+- 完成后: `python gate-enforcer.py complete P5` → 引擎验证 verification JSON 存在、QGW-INDEX 已更新、session summary 已写入
 
 验收清单追加到 Plan 文档末尾（持久化，防止 context compaction 丢失），同时更新结构化 JSON。
 

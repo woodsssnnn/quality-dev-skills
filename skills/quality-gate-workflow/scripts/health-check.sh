@@ -65,7 +65,7 @@ echo "========================================="
 echo ""
 
 # 1. 技能文件存在性
-echo "[1/12] 技能文件..."
+echo "[1/13] 技能文件..."
 if [ -f "$SKILL_DIR/SKILL.md" ]; then
     version=$(grep 'version:' "$SKILL_DIR/SKILL.md" | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
     echo "  ✅ SKILL.md 存在 (v$version)"
@@ -77,7 +77,7 @@ fi
 
 # 2. 参考文件完整性
 echo ""
-echo "[2/12] 参考文件..."
+echo "[2/13] 参考文件..."
 for f in acceptance-criteria-schema.json error-patterns.json regression-test-cases.md verifier-templates.md constitution-template.md; do
     if [ -f "$SKILL_DIR/references/$f" ]; then
         echo "  ✅ references/$f"
@@ -90,7 +90,7 @@ done
 
 # 3. 脚本完整性
 echo ""
-echo "[3/12] 脚本文件..."
+echo "[3/13] 脚本文件..."
 for f in verify-checkpoint.sh health-check.sh; do
     if [ -f "$SKILL_DIR/scripts/$f" ]; then
         echo "  ✅ scripts/$f"
@@ -103,7 +103,7 @@ done
 
 # 4. 工作空间产出物目录
 echo ""
-echo "[4/12] 工作空间产出物目录..."
+echo "[4/13] 工作空间产出物目录..."
 for dir in plans verification reports sessions; do
     if [ -d "docs/$dir" ]; then
         echo "  ✅ docs/$dir/"
@@ -116,7 +116,7 @@ done
 
 # 5. 项目 CLAUDE.md 触发词
 echo ""
-echo "[5/12] 项目 CLAUDE.md 触发词..."
+echo "[5/13] 项目 CLAUDE.md 触发词..."
 if [ -f "CLAUDE.md" ]; then
     if grep -q "quality-gate-workflow" "CLAUDE.md" 2>/dev/null; then
         echo "  ✅ quality-gate-workflow 触发词已配置"
@@ -137,7 +137,7 @@ fi
 
 # 6. dev_rule 配置检查
 echo ""
-echo "[6/12] dev_rule 配置..."
+echo "[6/13] dev_rule 配置..."
 if [ -f "CLAUDE.md" ]; then
     # 优先检查 dev_rule_path（新方式）
     if grep -q "dev_rule_path" "CLAUDE.md" 2>/dev/null; then
@@ -187,7 +187,7 @@ fi
 
 # 7. gate1_constitution 检查
 echo ""
-echo "[7/12] gate1_constitution 配置..."
+echo "[7/13] gate1_constitution 配置..."
 if [ -f "CLAUDE.md" ]; then
     if grep -q "gate1_constitution\|Gate 1 项目 constitution" "CLAUDE.md" 2>/dev/null; then
         echo "  ✅ 已声明项目级需求解析约束"
@@ -200,7 +200,7 @@ fi
 
 # 8. Hook 配置检查
 echo ""
-echo "[8/12] Hook 配置..."
+echo "[8/13] Hook 配置..."
 hook_configured=0
 for settings_file in ".claude/settings.json" ".claude/settings.local.json" "$HOME/.claude/settings.json"; do
     if [ -f "$settings_file" ] && grep -q "verify-checkpoint" "$settings_file" 2>/dev/null; then
@@ -218,7 +218,7 @@ fi
 
 # 9. QGW-INDEX.md（v6.0）
 echo ""
-echo "[9/12] QGW-INDEX.md..."
+echo "[9/13] QGW-INDEX.md..."
 if [ -f "docs/QGW-INDEX.md" ]; then
     echo "  ✅ docs/QGW-INDEX.md 存在"
     PASS=$((PASS+1))
@@ -229,7 +229,7 @@ fi
 
 # 10. Hook 模式检查（v6.0）
 echo ""
-echo "[10/12] Hook 模式..."
+echo "[10/13] Hook 模式..."
 hook_mode_found=0
 for settings_file in ".claude/settings.json" ".claude/settings.local.json" "$HOME/.claude/settings.json"; do
     if [ -f "$settings_file" ] && grep -q "QGW_HOOK_MODE" "$settings_file" 2>/dev/null; then
@@ -248,7 +248,7 @@ fi
 
 # 11. 数据库 MCP 可用性
 echo ""
-echo "[11/12] 数据库 MCP..."
+echo "[11/13] 数据库 MCP..."
 db_mcp_found=0
 for settings_file in ".claude/settings.json" ".claude/settings.local.json" "$HOME/.claude/settings.json"; do
     if [ -f "$settings_file" ] && grep -q "test-db-mcp\|mysql_query" "$settings_file" 2>/dev/null; then
@@ -268,13 +268,67 @@ fi
 
 # 12. 工作空间层 error-patterns
 echo ""
-echo "[12/12] 工作空间层自进化数据..."
+echo "[12/13] 工作空间层自进化数据..."
 if [ -f "docs/verification/error-patterns.json" ]; then
     pattern_count=$(grep -c '"id"' "docs/verification/error-patterns.json" 2>/dev/null || echo "0")
     echo "  ✅ docs/verification/error-patterns.json 存在 ($pattern_count 个模式)"
     PASS=$((PASS+1))
 else
     echo "  ℹ️  docs/verification/error-patterns.json 尚未创建（首次 FAIL 后自动生成）"
+    WARN=$((WARN+1))
+fi
+
+# 13. 确定性执行引擎
+echo ""
+echo "[13/13] 确定性执行引擎..."
+ENGINE_STATE="docs/.qgw-engine-state.json"
+if [ -f "$ENGINE_STATE" ]; then
+    if [ -n "$PYTHON" ]; then
+        engine_info=$("$PYTHON" -c "
+import json, sys
+try:
+    with open('$ENGINE_STATE', 'r', encoding='utf-8') as f:
+        d = json.load(f)
+    status = d.get('status', 'UNKNOWN')
+    current = d.get('current_step', 'none')
+    steps = d.get('steps', {})
+    completed = sum(1 for s in steps.values() if s.get('status') == 'COMPLETED')
+    total = len(steps)
+    gate = d.get('gate', 'unknown')
+    session_id = d.get('session_id', 'unknown')
+    print(f'{status}')
+    print(f'{current}')
+    print(f'{completed}/{total}')
+    print(f'{gate}')
+    print(f'{session_id}')
+except Exception as e:
+    print(f'ERROR')
+    print(f'{e}')
+    print(f'0/0')
+    print(f'unknown')
+    print(f'unknown')
+" 2>/dev/null)
+        e_status=$(echo "$engine_info" | sed -n '1p')
+        e_current=$(echo "$engine_info" | sed -n '2p')
+        e_progress=$(echo "$engine_info" | sed -n '3p')
+        e_gate=$(echo "$engine_info" | sed -n '4p')
+        e_session=$(echo "$engine_info" | sed -n '5p')
+        if [ "$e_status" = "ERROR" ]; then
+            echo "  ❌ 引擎状态文件解析失败: $e_current"
+            FAIL=$((FAIL+1))
+        else
+            echo "  ✅ 引擎状态文件存在"
+            echo "     会话: $e_session ($e_gate)"
+            echo "     状态: $e_status | 当前步骤: $e_current | 进度: $e_progress"
+            PASS=$((PASS+1))
+        fi
+    else
+        echo "  ℹ️  引擎状态文件存在（无 Python，跳过详细检查）"
+        WARN=$((WARN+1))
+    fi
+else
+    echo "  ℹ️  确定性引擎未激活（docs/.qgw-engine-state.json 不存在）"
+    echo "     提示: 使用 \`python gate-enforcer.py init --gate gate1\` 启用引擎"
     WARN=$((WARN+1))
 fi
 

@@ -73,6 +73,10 @@ cat ~/.codex/sessions/2026/{session-id}/history.json
 
 > 输出: `[qgw:gate2:S0] 工作空间检查 ...` / `✅ 目录就绪` 或 `✅ 已创建`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S0` → 必须收到 `ALLOW`
+- 完成后: `python gate-enforcer.py complete S0`
+
 检查并创建工作空间目录（如果不存在）：
 
 ```bash
@@ -113,6 +117,10 @@ Gate 2 S0 开始时，检查 PRD 文件修改时间 vs Gate 1 完成时间（从
 
 > 输出: `[qgw:gate2:S1] 提取验收标准 (来自 Gate 1 清单 / 手动提取)` / `✅ N 条标准`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S1`
+- 完成后: `python gate-enforcer.py complete S1`
+
 **优先从 Gate 1 验收清单读取**（Plan 文档附录 + 结构化 JSON）。存在时直接使用，不重复提取。
 
 **手动提取**（无 Gate 1 时）：重读 Plan 文档 AND 源需求文档。每条标准必须具体可验证：
@@ -138,6 +146,10 @@ Dev Rule Checklist: [项目 CLAUDE.md dev_rule_path 或 gate_dev_rules]
 
 > 输出: `[qgw:gate2:S2] 实现 Unit N/M: [名称] ...`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S2`
+- 完成后: `python gate-enforcer.py complete S2`
+
 按验收标准写代码。
 
 **读取 Scope**：实现前从 Plan 中读取当前 unit 的 Scope 声明（`allowedChanges` / `forbiddenChanges` / `estimatedLines`）。实现过程中只修改 allowed 路径内的文件，禁止修改 forbidden 路径内的文件。
@@ -155,6 +167,10 @@ Dev Rule Checklist: [项目 CLAUDE.md dev_rule_path 或 gate_dev_rules]
 ## Step 2.5：Boundary Check
 
 > 输出: `[qgw:gate2:S2.5] Boundary Check ...` / `✅ 所有变更在允许范围内` 或 `❌ N 处越界变更`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S2.5`
+- 完成后: `python gate-enforcer.py complete S2.5`
 
 借鉴 agent-spec 的 boundary enforcement，检查代码变更是否在 Plan 定义的范围内（反模式 #36：越界变更必须回滚或更新 Plan）。
 
@@ -203,6 +219,10 @@ Dev Rule Checklist: [项目 CLAUDE.md dev_rule_path 或 gate_dev_rules]
 
 > 输出: `[qgw:gate2:S3] 自验 ...` / `✅ 全部通过` 或 `❌ N 项 Fail → 修复中`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S3`
+- 完成后: `python gate-enforcer.py complete S3`
+
 逐条检查每条标准：
 
 - **Pass**：引用标准 + 引用代码 + 确认匹配
@@ -215,6 +235,10 @@ Dev Rule Checklist: [项目 CLAUDE.md dev_rule_path 或 gate_dev_rules]
 ## Step 3.5：数据库 Schema 验证（后端专属）
 
 > 输出: `[qgw:gate2:S3.5] Schema 验证 ...` / `✅ N 处 SQL 列名已确认` 或 `❌ M 处列不存在 → 修复中` 或 `⚠️ DB MCP 不可用, 跳过`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S3.5` → 收到 `ALLOW` 或 `SKIP`
+- 完成后: `python gate-enforcer.py complete S3.5`
 
 **前置条件**：本次实现涉及 SQL 拼接（SqlProvider、Mapper XML、动态 SQL）。纯前端实现跳过此步。
 
@@ -272,6 +296,11 @@ SELECT TYPE, ITEM_ID FROM some_table LIMIT 1;
 ## Step 4：独立 verifier 子代理
 
 > 输出: `[qgw:gate2:S4] 派独立 verifier 子代理 (round N)` / `✅ 全部 PASS` 或 `❌ N 项 FAIL — 根因: CODE / PLAN`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S4`
+- 完成后: `python gate-enforcer.py complete S4 --toolCallId "Agent|S4|ISO-timestamp"` → **引擎强制检查 toolCallId 非空且格式有效**，否则 BLOCK
+- 失败时: `python gate-enforcer.py fail S4 --reason "..." --rootCause CODE|PLAN`
 
 自验 100% 通过后，派子代理。详细 prompt 模板见 `references/verifier-templates.md`。
 
@@ -373,6 +402,10 @@ SELECT TYPE, ITEM_ID FROM some_table LIMIT 1;
 
 > 输出: `[qgw:gate2:S4.5] E2E 行为验证 ...` / `✅ 测试全部通过` 或 `❌ N 个测试失败`
 
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S4.5` → 收到 `ALLOW` 或 `SKIP`（init 时未指定 `--e2e` 则自动 SKIP）
+- 完成后: `python gate-enforcer.py complete S4.5`
+
 借鉴 Autonoma 的 agentic testing，S4 验证"代码匹配 Plan"（静态），S4.5 验证"代码正确运行"（动态）。反模式 #45：E2E 不可替代 S4。
 
 **前置条件**：用户指定 `--e2e` 参数。未指定时跳过此步。
@@ -467,6 +500,10 @@ SELECT TYPE, ITEM_ID FROM some_table LIMIT 1;
 ## Step 5：100% 通过 → 提交
 
 > 输出: `[qgw][{timestamp}][{platform}:{session_id}][gate2][S5/5] ✅ Unit N/M 提交`
+
+**引擎交互**（必须）：
+- 开始前: `python gate-enforcer.py enter S5` → 引擎检查 S4=COMPLETED 且 toolCallId 存在
+- 完成后: `python gate-enforcer.py complete S5` → 引擎验证 toolCallId 完整、codeRefs 存在、Plan 已更新
 
 **S4 前置检查**：进入 S5 前，必须通过以下检查：
 
@@ -643,6 +680,8 @@ Date: [日期]
 
 > 输出: `[qgw:debug:D1] 定义修复标准 — Bug: [描述]`
 
+**引擎交互**: `python gate-enforcer.py enter D1` → ... → `python gate-enforcer.py complete D1`
+
 ```
 ## Fix Criteria: [Bug描述]
 症状: [确切行为或错误]
@@ -656,17 +695,23 @@ Date: [日期]
 
 > 输出: `[qgw:debug:D2] 最小修复 ...`
 
+**引擎交互**: `python gate-enforcer.py enter D2` → ... → `python gate-enforcer.py complete D2`
+
 禁止"顺便"重构。
 
 **D3. 自验**
 
 > 输出: `[qgw:debug:D3] 自验 ...` / `✅ 症状消除 + 预期达成 + 回归边界完整`
 
+**引擎交互**: `python gate-enforcer.py enter D3` → ... → `python gate-enforcer.py complete D3`
+
 验证：症状消除 + 预期达成 + 回归边界完整。
 
 **D4. verifier 子代理 → 提交**
 
 > 输出: `[qgw:debug:D4] verifier 验证` / `✅ 修复正确, 无回归 → 提交`
+
+**引擎交互**: `python gate-enforcer.py enter D4` → ... → `python gate-enforcer.py complete D4 --toolCallId "Agent|D4|ISO-timestamp"` → **引擎强制检查 toolCallId**
 
 verifier 检查修复正确性 + 无回归 + 无 over-fixing。同 S4，必须通过 `Task` 或 `Agent` 工具派发。
 

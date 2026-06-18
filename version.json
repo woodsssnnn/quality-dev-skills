@@ -1,7 +1,7 @@
 {
   "template": {
     "name": "project-dev-rule-template",
-    "version": "0.6.0.0",
+    "version": "0.7.0.0",
     "description": "项目开发规范技能模板",
     "compatibility": {
       "min_project_version": "0.5.0.0",
@@ -10,15 +10,32 @@
   },
   "skills": {
     "quality-gate-workflow": {
-      "version": "0.6.0.0",
+      "version": "0.7.0.0",
       "description": "质量门禁工作流"
     },
     "skill-optimizer": {
-      "version": "0.6.0.0",
+      "version": "0.7.0.0",
       "description": "技能自动优化框架"
     }
   },
   "changelog": [
+    {
+      "version": "0.7.0.0",
+      "date": "2026-06-18",
+      "changes": [
+        "确定性执行引擎（gate-enforcer.py）：Python 状态机 + Guard 检查，将步骤顺序/产出物检查/toolCallId验证从 prompt 指令提升为 if-else 机械强制",
+        "新增反模式 #58：gate-enforcer BLOCK 时禁止继续执行",
+        "SKILL.md 新增红线：gate-enforcer 返回 BLOCK 时继续执行",
+        "SKILL.md 新增合理化借口表条目：gate-enforcer 调用浪费 token",
+        "Gate 1/Gate 2 每个步骤追加引擎交互指令（enter/complete）",
+        "P1-check 升级为虚拟步骤 + 引擎 guard 聚合检查",
+        "P4/S4 complete 时引擎强制检查 toolCallId 非空且格式有效",
+        "--lite 模式 skip 矩阵由引擎 init 时确定，持久化后不可更改",
+        "health-check.sh 新增第 13 项检查：确定性引擎状态文件",
+        "project-config.md 新增 engine 配置节（enabled/strict_mode/state_file/checkpoint_dir）",
+        "反模式规则 57 → 58 条"
+      ]
+    },
     {
       "version": "0.6.0.0",
       "date": "2026-06-18",
