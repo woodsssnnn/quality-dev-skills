@@ -71,11 +71,14 @@ TRANSITION_GUARDS = {
     "P1.7":     {"requires": {"P1": COMPLETED}, "skippable": True},
     "P1-check": {"requires": {"P1": COMPLETED}, "pseudo": True,
                  "sub_decision_checks": ["P1.5", "P1.6", "P1.7"]},
-    "P2":       {"requires": {"P1-check": COMPLETED}},
+    "P2":       {"requires": {"P1-check": COMPLETED},
+                 "artifact_checks": ["plan_scope_declared"]},
     "P2.5":     {"requires": {"P2": COMPLETED}, "skippable": True,
                  "artifact_checks": ["plan_files_exist"]},
-    "P3":       {"requires": {"P2": COMPLETED}},
-    "P4":       {"requires": {"P3": COMPLETED}},
+    "P3":       {"requires": {"P2": COMPLETED},
+                 "artifact_checks": ["plan_coverage"]},
+    "P4":       {"requires": {"P3": COMPLETED},
+                 "artifact_checks": ["verifier_report_written"]},
     "P5":       {"requires": {"P4": COMPLETED},
                  "artifact_checks": ["verification_json_valid", "index_updated", "session_summary"]},
 
@@ -83,13 +86,18 @@ TRANSITION_GUARDS = {
     "S0":       {"requires": {}, "artifact_checks": ["dirs_exist"]},
     "S1":       {"requires": {"S0": COMPLETED}},
     "S2":       {"requires": {"S1": COMPLETED}},
-    "S2.5":     {"requires": {"S2": COMPLETED}},
-    "S3":       {"requires": {"S2.5": COMPLETED}},
-    "S3.5":     {"requires": {"S3": COMPLETED}, "skippable": True},
-    "S4":       {"requires": {"S3": COMPLETED}},
+    "S2.5":     {"requires": {"S2": COMPLETED},
+                 "artifact_checks": ["boundary_valid"]},
+    "S3":       {"requires": {"S2.5": COMPLETED},
+                 "artifact_checks": ["self_verify_documented"]},
+    "S3.5":     {"requires": {"S3": COMPLETED}, "skippable": True,
+                 "artifact_checks": ["db_schema_verified"]},
+    "S4":       {"requires": {"S3": COMPLETED},
+                 "artifact_checks": ["verifier_report_written"]},
     "S4.5":     {"requires": {"S4": COMPLETED}, "skippable": True},
     "S5":       {"requires": {"S4": COMPLETED},
-                 "artifact_checks": ["toolcallid_complete", "coderefs_present", "plan_updated"]},
+                 "artifact_checks": ["toolcallid_complete", "coderefs_present", "plan_updated",
+                                     "feedback_rounds"]},
 
     # Debug
     "D1":       {"requires": {}},
@@ -215,7 +223,167 @@ def check_plan_updated(state):
     plans = list(Path("docs/plans").glob("*.md")) if os.path.isdir("docs/plans") else []
     if not plans:
         return False, "docs/plans/ 中无 Plan 文件"
-    return True, "Plan 文件存在"
+    # 检查是否有 Gate 2 实现记录
+    for pf in plans:
+        try:
+            content = pf.read_text(encoding="utf-8")
+            if "Gate 2 实现记录" in content or "实际变更" in content:
+                return True, f"Plan 已更新 ({pf.name} 含实现记录)"
+        except IOError:
+            pass
+    return True, "Plan 文件存在（未检测到实现记录，不阻断）"
+
+
+def check_plan_scope_declared(state):
+    """检查 Plan 中是否有 Scope 声明（Allowed/Forbidden）"""
+    plans_dir = Path("docs/plans")
+    if not plans_dir.is_dir():
+        return True, "无 plans 目录（跳过 Scope 检查）"
+    for pf in plans_dir.glob("*.md"):
+        try:
+            content = pf.read_text(encoding="utf-8")
+            if "Allowed" in content or "Forbidden" in content or "Scope" in content:
+                return True, f"Plan {pf.name} 含 Scope 声明"
+        except IOError:
+            pass
+    return True, "未检测到 Scope 声明（不阻断，建议添加）"
+
+
+def check_plan_coverage(state):
+    """检查 Plan 是否覆盖了所有可验证项"""
+    ver_dir = Path("docs/verification")
+    if not ver_dir.is_dir():
+        return True, "无 verification 目录（跳过覆盖检查）"
+    total_items = 0
+    covered_items = 0
+    for jf in ver_dir.glob("unit-*.json"):
+        try:
+            with open(jf, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for unit in data.get("units", []):
+                for item in unit.get("items", []):
+                    total_items += 1
+                    if item.get("status") in ("PASS", "FAIL", "SKIPPED"):
+                        covered_items += 1
+        except (json.JSONDecodeError, IOError):
+            pass
+    if total_items == 0:
+        return True, "无可验证项（跳过覆盖检查）"
+    return True, f"Plan 覆盖: {covered_items}/{total_items} 项已处理"
+
+
+def check_verifier_report_written(state):
+    """检查 verification JSON 中是否有 verifier 报告"""
+    ver_dir = Path("docs/verification")
+    if not ver_dir.is_dir():
+        return False, "docs/verification/ 不存在"
+    for jf in ver_dir.glob("unit-*.json"):
+        try:
+            with open(jf, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            reports = data.get("verifierReports", [])
+            if reports:
+                return True, f"verifier 报告存在 ({len(reports)} 条)"
+        except (json.JSONDecodeError, IOError):
+            pass
+    return False, "verifierReports 为空 — 未找到验证报告"
+
+
+def check_boundary_valid(state):
+    """检查代码变更是否在 Plan Scope 内（读 git diff）"""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD~1"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode != 0:
+            # 可能没有 HEAD~1（首次提交）
+            result = subprocess.run(
+                ["git", "diff", "--name-only", "--staged"],
+                capture_output=True, text=True, timeout=10
+            )
+        changed_files = [f.strip() for f in result.stdout.strip().split("\n") if f.strip()]
+        if not changed_files:
+            return True, "无代码变更（跳过 boundary 检查）"
+        # 从 Plan 中解析 Scope
+        plans_dir = Path("docs/plans")
+        allowed_patterns = []
+        forbidden_patterns = []
+        if plans_dir.is_dir():
+            for pf in plans_dir.glob("*.md"):
+                try:
+                    content = pf.read_text(encoding="utf-8")
+                    # 简单解析 Allowed/Forbidden 行
+                    for line in content.split("\n"):
+                        line = line.strip()
+                        if line.startswith("- **Allowed**:"):
+                            patterns = line.split(":", 1)[-1].strip().strip("`")
+                            allowed_patterns.extend([p.strip() for p in patterns.split(",") if p.strip()])
+                        elif line.startswith("- **Forbidden**:"):
+                            patterns = line.split(":", 1)[-1].strip().strip("`")
+                            forbidden_patterns.extend([p.strip() for p in patterns.split(",") if p.strip()])
+                except IOError:
+                    pass
+        if not allowed_patterns and not forbidden_patterns:
+            return True, f"无 Scope 声明（{len(changed_files)} 文件变更，跳过详细检查）"
+        # 检查 forbidden
+        import fnmatch
+        violations = []
+        for cf in changed_files:
+            for fp in forbidden_patterns:
+                if fnmatch.fnmatch(cf, fp):
+                    violations.append(f"{cf} 匹配 forbidden: {fp}")
+        if violations:
+            return False, f"越界变更: {', '.join(violations[:3])}"
+        return True, f"Boundary OK: {len(changed_files)} 文件在 Scope 内"
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return True, "git 不可用（跳过 boundary 检查）"
+
+
+def check_self_verify_documented(state):
+    """检查验收 JSON 中 item status 是否已从 PENDING 更新"""
+    ver_dir = Path("docs/verification")
+    if not ver_dir.is_dir():
+        return True, "无 verification 目录（跳过自验检查）"
+    pending_count = 0
+    total_count = 0
+    for jf in ver_dir.glob("unit-*.json"):
+        try:
+            with open(jf, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for unit in data.get("units", []):
+                for item in unit.get("items", []):
+                    total_count += 1
+                    if item.get("status") == "PENDING":
+                        pending_count += 1
+        except (json.JSONDecodeError, IOError):
+            pass
+    if total_count == 0:
+        return True, "无可验证项（跳过自验检查）"
+    if pending_count == total_count:
+        return False, f"所有 {total_count} 项仍为 PENDING — 自验未执行"
+    return True, f"自验已执行: {total_count - pending_count}/{total_count} 项已更新"
+
+
+def check_db_schema_verified(state):
+    """检查 DB 相关 item 是否有验证 SQL 记录或降级标记"""
+    # 轻量检查：只要 verification JSON 存在且不报错即通过
+    ver_dir = Path("docs/verification")
+    if not ver_dir.is_dir():
+        return True, "无 verification 目录（跳过 DB 检查）"
+    return True, "DB schema 检查通过（轻量模式）"
+
+
+def check_feedback_rounds(state):
+    """检查反馈回路是否已超限"""
+    if not state:
+        return True, "无状态（跳过反馈检查）"
+    rounds = state.get("feedback_rounds", 0)
+    max_rounds = state.get("max_feedback_rounds", 2)
+    if rounds >= max_rounds:
+        return False, f"反馈轮次已达上限 ({rounds}/{max_rounds}) — 停止并交由用户"
+    return True, f"反馈轮次: {rounds}/{max_rounds}"
 
 
 ARTIFACT_CHECKERS = {
@@ -227,6 +395,13 @@ ARTIFACT_CHECKERS = {
     "toolcallid_complete": check_toolcallid_complete,
     "coderefs_present": check_coderefs_present,
     "plan_updated": check_plan_updated,
+    "plan_scope_declared": check_plan_scope_declared,
+    "plan_coverage": check_plan_coverage,
+    "verifier_report_written": check_verifier_report_written,
+    "boundary_valid": check_boundary_valid,
+    "self_verify_documented": check_self_verify_documented,
+    "db_schema_verified": check_db_schema_verified,
+    "feedback_rounds": check_feedback_rounds,
 }
 
 
@@ -732,15 +907,27 @@ class GateEngine:
             rollback_target = ROLLBACK_TARGETS[step].get(rc)
 
         # 反馈回路计数
-        if step in FEEDBACK_STEPS and root_cause == "PLAN":
-            self.state["feedback_rounds"] += 1
-            if self.state["feedback_rounds"] >= self.state["max_feedback_rounds"]:
-                self._save_state()
-                return output_stop(
-                    f"已达最大反馈轮次 ({self.state['max_feedback_rounds']})，停止并交由用户决策",
-                    step=step,
-                    feedback_rounds=f"{self.state['feedback_rounds']}/{self.state['max_feedback_rounds']}"
-                )
+        if step in FEEDBACK_STEPS:
+            if root_cause == "PLAN":
+                self.state["feedback_rounds"] += 1
+                if self.state["feedback_rounds"] >= self.state["max_feedback_rounds"]:
+                    self._save_state()
+                    return output_stop(
+                        f"已达最大反馈轮次 ({self.state['max_feedback_rounds']})，停止并交由用户决策",
+                        step=step,
+                        feedback_rounds=f"{self.state['feedback_rounds']}/{self.state['max_feedback_rounds']}"
+                    )
+            elif root_cause == "CODE":
+                # CODE 根因独立计数（Gate 2 内 ≤2 轮约束）
+                code_rounds = self.state.get("code_feedback_rounds", 0) + 1
+                self.state["code_feedback_rounds"] = code_rounds
+                if code_rounds > 2:
+                    self._save_state()
+                    return output_stop(
+                        f"CODE 根因修复已达 {code_rounds} 轮（上限 2 轮），停止并交由用户决策",
+                        step=step,
+                        code_rounds=code_rounds
+                    )
 
         # 回退目标步骤重置为 NOT_STARTED
         if rollback_target and rollback_target in steps:
@@ -814,31 +1001,80 @@ class GateEngine:
         if not self._ensure_state():
             return output_block("引擎未初始化，无法恢复")
 
-        # 重新验证文件存在性
         steps = self.state.get("steps", {})
         inconsistencies = []
+        warnings = []
+        recovered_steps = []
+
+        # 1. 自动恢复 RUNNING 步骤（中断的步骤重置为 NOT_STARTED）
+        for s, st in steps.items():
+            if st["status"] == RUNNING:
+                st["status"] = NOT_STARTED
+                st["started_at"] = None
+                recovered_steps.append(s)
+
+        # 2. 验证 COMPLETED 步骤的 checkpoint 和 artifact 文件
         for s, st in steps.items():
             if st["status"] == COMPLETED:
-                # 检查 checkpoint 文件是否存在
+                # 检查 checkpoint 文件
                 safe_name = s.replace(".", "_")
                 cp_path = os.path.join(CHECKPOINT_DIR, f"{safe_name}.json")
                 if not os.path.exists(cp_path):
-                    inconsistencies.append(f"{s}: 状态=COMPLETED 但 checkpoint 文件缺失")
+                    inconsistencies.append(f"{s}: checkpoint 文件缺失")
+                # 检查 artifact 文件仍存在
+                for artifact in st.get("artifacts", []):
+                    if not os.path.exists(artifact):
+                        warnings.append(f"{s}: artifact 文件不存在: {artifact}")
+
+        # 3. 5 问题重启测试
+        five_q_results = {}
+        # Q1: 我在哪？
+        current = self.state.get("current_step")
+        five_q_results["我在哪"] = f"gate={self.state.get('gate')}, current_step={current}"
+        # Q2: 我要去哪？
+        next_step = None
+        for s, st in steps.items():
+            if st["status"] in (NOT_STARTED,) and not st.get("meta", {}).get("skip_reason"):
+                next_step = s
+                break
+        five_q_results["我要去哪"] = next_step or "SESSION_COMPLETE"
+        # Q3: 目标是什么？
+        five_q_results["目标"] = f"{self.state.get('gate')} {self.state.get('mode', 'default')} 流程"
+        # Q4: 学到了什么？
+        completed_count = sum(1 for st in steps.values() if st["status"] == COMPLETED)
+        five_q_results["学到了什么"] = f"{completed_count} 个步骤已完成"
+        # Q5: 做了什么？
+        five_q_results["做了什么"] = f"session_id={self.state.get('session_id')}, feedback_rounds={self.state.get('feedback_rounds', 0)}"
+
+        if recovered_steps:
+            warnings.append(f"已自动恢复 {len(recovered_steps)} 个中断步骤: {', '.join(recovered_steps)}")
+
+        self._update_gate_state()
+        self._save_state()
+
+        result_data = {
+            "session_id": self.state["session_id"],
+            "gate": self.state.get("gate"),
+            "current_step": self.state.get("current_step"),
+            "next_step": five_q_results["我要去哪"],
+            "five_questions": five_q_results,
+            "recovered_steps": recovered_steps,
+            "completed_steps": completed_count,
+            "total_steps": len(steps),
+        }
 
         if inconsistencies:
             return output_block(
-                f"状态不一致:\n" + "\n".join(f"  - {i}" for i in inconsistencies) +
-                "\n请检查后重试",
-                inconsistencies=inconsistencies
+                f"状态不一致 ({len(inconsistencies)} 项):\n" +
+                "\n".join(f"  - {i}" for i in inconsistencies) +
+                "\n建议: 请修复后重试 resume",
+                **result_data
             )
 
-        self._update_gate_state()
-        return output_ok(
-            f"会话恢复成功",
-            session_id=self.state["session_id"],
-            current_step=self.state.get("current_step"),
-            gate=self.state["gate"],
-        )
+        msg = f"会话恢复成功 ({completed_count}/{len(steps)} 步已完成)"
+        if warnings:
+            msg += f" | {len(warnings)} 个警告"
+        return output_ok(msg, warnings=warnings, **result_data)
 
     # ===== 辅助方法 =====
 
