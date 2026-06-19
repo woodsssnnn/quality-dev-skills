@@ -2,6 +2,26 @@
 
 All notable changes to quality-gate-workflow will be documented in this file.
 
+## [0.8.0.0] - 2026-06-18
+
+### Added - 生态升级（PRD 正向触发 + SKILL.md 拆分路由 + qgw-init + 测试框架 + 技能清单 + CI/CD + 垂直技能包）
+- **PRD 正向触发**：`prd-changed` 子命令检测 PRD 变更并自动触发下游 Plan/Code 重验
+- **Plan 微调**：`plan-tweak` 子命令支持 Gate 2 执行中轻量调整 Plan，无需全量重验 Gate 1
+- **SKILL.md 拆分路由**：将 gate1/gate2/analyze/self-check 工作流拆分为独立 references，SKILL.md 只做路由入口
+- **qgw-init 初始化技能**：7 步交互式引导 + 非交互脚本，支持平台选择、模式选择、.qgw/ 目录创建、health-check 验证
+- **pytest 测试框架**：103 用例覆盖 gate-enforcer.py 全子命令和 Guard 转换规则
+- **技能清单 manifest**：skill-manifest.json + generate-manifest.py 自动扫描生成
+- **垂直技能包**：api-design-review（REST API 设计审查）、db-migration-gate（数据库迁移安全门禁）
+- **CI/CD 增强**：quality-check.yml 8 个 job + release.yml 发布自动化 + qgw-pr-check.yml 可复用 PR 检查
+- **技能间通信协议**：shared/skill-protocol.md + shared/vertical-skill-guide.md
+
+### Fixed
+- **hook-install.sh**：修复 heredoc 多行 JSON 嵌入 Python 单引号字符串导致的 SyntaxError，改为 Python 内部构建 dict
+- **hook-install.sh**：修复 `hook_cmd` 与 entry.command 格式不一致导致 duplicate 检测永远失效的 bug
+- **health-check.sh**：constitution 检查增加 `.qgw/constitution.md` 文件识别（v6.5 推荐方式），优先于 CLAUDE.md 内联声明
+
+---
+
 ## [0.7.1.0] - 2026-06-18
 
 ### Added - Prompt 瘦身 + Phase 2/3 深度集成

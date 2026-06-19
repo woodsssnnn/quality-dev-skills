@@ -25,8 +25,8 @@ SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 HOOK_PATH="$SKILL_DIR/scripts/$HOOK_SCRIPT"
 
-# 构建 Hook 配置 JSON（使用 heredoc 确保变量展开）
-HOOK_CONFIG_ENTRY=$(cat <<-HOOKJSON
+# 构建 Hook 配置条目（仅供 dry-run 显示和 grep 检测用）
+HOOK_CONFIG_DISPLAY=$(cat <<-HOOKJSON
 {
       "command": "bash ${HOOK_PATH}",
       "matcher": "Bash",
@@ -105,7 +105,7 @@ else
     echo "   已知工具：Claude Code (.claude/settings.json)"
     echo "   如果使用其他工具，请手动安装 Hook："
     echo "     将以下配置写入工具对应的 settings 文件："
-    echo "     ${HOOK_CONFIG_ENTRY//$'\n'/ }"
+    echo "     ${HOOK_CONFIG_DISPLAY//$'\n'/ }"
     exit 0
 fi
 
@@ -186,7 +186,7 @@ if [ "$DRY_RUN" = true ]; then
     echo "=== 将要写入的配置 ==="
     echo "文件: $TARGET_FILE"
     echo "内容: 在 hooks.PreToolUse 数组中添加以下条目"
-    echo "$HOOK_CONFIG_ENTRY"
+    echo "$HOOK_CONFIG_DISPLAY"
     echo ""
     echo "=== 干运行完成，未写入任何文件 ==="
     exit 0
@@ -194,14 +194,20 @@ fi
 
 # ===== 写入配置 =====
 
-# 使用 Python 精确写入 JSON（避免 shell JSON 拼装错误）
+# 使用 Python 精确写入 JSON（在 Python 内部构建 dict，避免 shell heredoc 嵌入问题）
 "$PYTHON" -c "
 import json, sys, os
 
 target = '$TARGET_FILE'
-hook_cmd = '$HOOK_PATH'
-entry = json.loads('$HOOK_CONFIG_ENTRY')
+hook_cmd = 'bash $HOOK_PATH'
 hook_mode = '$HOOK_MODE'
+
+# 在 Python 内部直接构建 entry dict（不依赖 shell heredoc 传递多行 JSON）
+entry = {
+    'command': hook_cmd,
+    'matcher': 'Bash',
+    'hooks': ['git commit', 'PreToolUse']
+}
 
 # 读取或创建配置
 try:
@@ -224,8 +230,6 @@ if already:
 else:
     hooks_list.append(entry)
     cfg['hooks']['PreToolUse'] = hooks_list
-    
-    # 写入文件
     with open(target, 'w') as f:
         json.dump(cfg, f, indent=2)
     print('  ✅ Hook 配置已写入')

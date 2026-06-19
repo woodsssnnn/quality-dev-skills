@@ -188,14 +188,25 @@ fi
 # 7. gate1_constitution 检查
 echo ""
 echo "[7/13] gate1_constitution 配置..."
-if [ -f "CLAUDE.md" ]; then
+constitution_found=0
+# 优先检查 .qgw/constitution.md（v6.5 推荐方式，优先级最高）
+if [ -f ".qgw/constitution.md" ]; then
+    echo "  ✅ .qgw/constitution.md 存在（推荐方式）"
+    constitution_found=1
+    PASS=$((PASS+1))
+fi
+# 兼容 CLAUDE.md 内联声明（方式 A）
+if [ "$constitution_found" -eq 0 ] && [ -f "CLAUDE.md" ]; then
     if grep -q "gate1_constitution\|Gate 1 项目 constitution" "CLAUDE.md" 2>/dev/null; then
-        echo "  ✅ 已声明项目级需求解析约束"
+        echo "  ✅ CLAUDE.md 中已声明 gate1_constitution"
+        constitution_found=1
         PASS=$((PASS+1))
-    else
-        echo "  ℹ️  未声明 gate1_constitution（可选，模板见 references/constitution-template.md）"
-        WARN=$((WARN+1))
     fi
+fi
+if [ "$constitution_found" -eq 0 ]; then
+    echo "  ℹ️  未声明 gate1_constitution（可选，推荐创建 .qgw/constitution.md 或在 CLAUDE.md 中声明）"
+    echo "     模板见 references/constitution-template.md"
+    WARN=$((WARN+1))
 fi
 
 # 8. Hook 配置检查
