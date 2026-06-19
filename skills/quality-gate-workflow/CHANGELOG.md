@@ -2,6 +2,18 @@
 
 All notable changes to quality-gate-workflow will be documented in this file.
 
+## [0.8.0.1] - 2026-06-19
+
+### Fixed
+- **health-check.sh**：`grep -oP` (PCRE) 改为 `grep -oE` (POSIX ERE)，兼容 macOS BSD grep
+- **CI/CD**：shell-check job 移除 `|| true`，失败真正阻断；新增 powershell-check job；smoke-tests 增加 status 验证
+
+### Changed
+- SKILL.md 补齐 `category` / `triggers` / `integration` frontmatter
+- 测试总数：103 → 115（新增 test_self_check.py 8 例 + CLI 集成测试 4 例）
+
+---
+
 ## [0.8.0.0] - 2026-06-18
 
 ### Added - 生态升级（PRD 正向触发 + SKILL.md 拆分路由 + qgw-init + 测试框架 + 技能清单 + CI/CD + 垂直技能包）

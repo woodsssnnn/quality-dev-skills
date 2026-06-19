@@ -1,6 +1,6 @@
 {
   "id": "api-design-review",
-  "version": "0.8.0.0",
+  "version": "0.8.0.1",
   "path": "skills/api-design-review",
   "description": "REST API 设计审查：检查 URL 命名、HTTP 方法、响应码、分页和 OpenAPI 一致性",
   "category": "vertical",

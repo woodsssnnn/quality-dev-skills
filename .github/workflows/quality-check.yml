@@ -42,7 +42,7 @@ jobs:
         run: |
           for f in $(find scripts -name "*.sh"); do
             echo "Checking $f"
-            shellcheck "$f" || true
+            shellcheck "$f"
           done
 
   -scan:
@@ -99,7 +99,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install test dependencies
-        run: pip install pytest
+        run: pip install -r skills/quality-gate-workflow/scripts/requirements-dev.txt
       - name: Run unit tests
         run: |
           if [ -d "skills/quality-gate-workflow/scripts/tests" ]; then
@@ -122,10 +122,33 @@ jobs:
         run: |
           if [ -f "skills/quality-gate-workflow/scripts/gate-enforcer.py" ]; then
             python skills/quality-gate-workflow/scripts/gate-enforcer.py --help
+            python skills/quality-gate-workflow/scripts/gate-enforcer.py status 2>/dev/null || true
             echo "✅ gate-enforcer.py smoke test passed"
           else
             echo "gate-enforcer.py not found, skipping"
           fi
+
+  powershell-check:
+    name: PowerShell Syntax Check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PowerShell scripts
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Path scripts -Filter "*.ps1" -Recurse
+          $errors = 0
+          foreach ($f in $files) {
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$parseErrors)
+            if ($parseErrors.Count -eq 0) {
+              Write-Host "  PASS $($f.Name)"
+            } else {
+              Write-Host "  FAIL $($f.Name): $($parseErrors[0].Message)"
+              $errors++
+            }
+          }
+          if ($errors -gt 0) { exit 1 }
+          Write-Host "✅ All PowerShell scripts pass syntax check"
 
   manifest-check:
     name: Manifest Consistency Check

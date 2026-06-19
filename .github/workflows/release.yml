@@ -41,16 +41,22 @@ jobs:
       - name: Check CHANGELOG has version entry
         run: |
           version="${{ needs.detect-version-change.outputs.version }}"
+          failed=0
           for skill_dir in skills/*/; do
             changelog="$skill_dir/CHANGELOG.md"
             if [ -f "$changelog" ]; then
               if grep -q "$version" "$changelog"; then
                 echo "✅ $changelog contains version $version"
               else
-                echo "⚠️ $changelog missing version $version"
+                echo "❌ $changelog missing version $version"
+                failed=$((failed + 1))
               fi
             fi
           done
+          if [ $failed -gt 0 ]; then
+            echo "❌ $failed CHANGELOG(s) missing version $version"
+            exit 1
+          fi
 
   run-tests:
     name: Run Tests Before Release

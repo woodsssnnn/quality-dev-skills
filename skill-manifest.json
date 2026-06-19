@@ -1,10 +1,10 @@
 {
   "generated_at": "2026-06-18T00:00:00Z",
-  "generator_version": "0.8.0.0",
+  "generator_version": "0.8.0.1",
   "skills": [
     {
       "id": "quality-gate-workflow",
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "path": "skills/quality-gate-workflow",
       "description": "质量门禁工作流：需求 → Plan → 代码全链路验证，五层防线保障交付质量",
       "category": "quality-assurance",
@@ -45,7 +45,7 @@
     },
     {
       "id": "skill-optimizer",
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "path": "skills/skill-optimizer",
       "description": "技能自动优化框架：rollout → score → bounded edit → gate 循环，提升技能质量",
       "category": "optimization",
@@ -83,7 +83,7 @@
     },
     {
       "id": "qgw-init",
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "path": "skills/qgw-init",
       "description": "项目初始化向导：7 步交互式引导，完成 QGW 质量门禁 + Dev-Rule 的全套初始化配置",
       "category": "initialization",
@@ -127,7 +127,7 @@
     },
     {
       "id": "api-design-review",
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "path": "skills/api-design-review",
       "description": "REST API 设计审查：检查 URL 命名、HTTP 方法、响应码、分页和 OpenAPI 一致性",
       "category": "vertical",
@@ -160,7 +160,7 @@
     },
     {
       "id": "db-migration-gate",
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "path": "skills/db-migration-gate",
       "description": "数据库迁移门禁：检查迁移文件安全性，防止危险 schema 变更进入生产环境",
       "category": "vertical",

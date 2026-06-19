@@ -17,7 +17,7 @@ triggers:
     - alembic
     - flyway
 metadata:
-  version: 0.8.0.0
+  version: 0.8.0.1
 integration:
   extends:
     - quality-gate-workflow

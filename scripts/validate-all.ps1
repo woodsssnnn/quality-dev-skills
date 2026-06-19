@@ -1,6 +1,6 @@
 # validate-all.ps1 — 全量验证脚本
 param()
-$repo = "c:\Users\Admin\.agents\skills-source\quality-dev-skills"
+$repo = Split-Path -Parent $PSScriptRoot
 $pass = 0; $fail = 0; $warn = 0
 
 function Pass($msg) { $script:pass++; Write-Host "  PASS $msg" -ForegroundColor Green }
@@ -55,8 +55,8 @@ foreach ($m in $refMatches) {
 Write-Host "`n=== 4. 技能包结构完整性 ==="
 $skills = @(
     @{name="qgw-init"; required=@("SKILL.md","scripts\qgw-init.sh","references\platform-configs.md","references\workflow-modes.md","CHANGELOG.md")},
-    @{name="api-design-review"; required=@("SKILL.md","references\api-conventions.md","scripts\check-api-convention.py","evaluations","manifest-entry.json")},
-    @{name="db-migration-gate"; required=@("SKILL.md","references\migration-conventions.md","scripts\check-migration-safety.py","evaluations","manifest-entry.json")}
+    @{name="api-design-review"; required=@("SKILL.md","references\api-conventions.md","scripts\check-api-convention.py","evaluations","manifest-entry.json","CHANGELOG.md")},
+    @{name="db-migration-gate"; required=@("SKILL.md","references\migration-conventions.md","scripts\check-migration-safety.py","evaluations","manifest-entry.json","CHANGELOG.md")}
 )
 foreach ($skill in $skills) {
     $skillDir = "$repo\skills\$($skill.name)"

@@ -113,6 +113,10 @@ if ($py) {
     & $py.Source $enforcer prd-changed --impact cosmetic 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) { Pass "prd-changed --impact cosmetic 成功" } else { Fail "prd-changed 失败" }
 
+    # plan-tweak
+    & $py.Source $enforcer plan-tweak --reason "测试微调" --scope "ch-1.1" 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) { Pass "plan-tweak 成功" } else { Fail "plan-tweak 失败" }
+
     Pop-Location
     Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
 } else {

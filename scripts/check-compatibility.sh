@@ -2,7 +2,7 @@
 # check-compatibility.sh - 版本兼容性检查脚本
 # 检查模板版本与项目技能版本的兼容性
 
-set -e
+set -euo pipefail
 
 # 默认值
 TEMPLATE_VERSION=""
@@ -63,9 +63,11 @@ version_compare() {
     local v1=$1
     local v2=$2
     
-    # 分割版本号
-    IFS='.' read -r v1_major v1_minor v1_patch <<< "$v1"
-    IFS='.' read -r v2_major v2_minor v2_patch <<< "$v2"
+    # 分割版本号（支持 4 级: Major.Minor.Patch.Iteration）
+    IFS='.' read -r v1_major v1_minor v1_patch v1_iter <<< "$v1"
+    IFS='.' read -r v2_major v2_minor v2_patch v2_iter <<< "$v2"
+    v1_iter=${v1_iter:-0}
+    v2_iter=${v2_iter:-0}
     
     # 比较主版本号
     if [ "$v1_major" -gt "$v2_major" ]; then
@@ -85,6 +87,13 @@ version_compare() {
     if [ "$v1_patch" -gt "$v2_patch" ]; then
         return 1
     elif [ "$v1_patch" -lt "$v2_patch" ]; then
+        return -1
+    fi
+    
+    # 比较迭代号（第 4 级）
+    if [ "$v1_iter" -gt "$v2_iter" ]; then
+        return 1
+    elif [ "$v1_iter" -lt "$v2_iter" ]; then
         return -1
     fi
     

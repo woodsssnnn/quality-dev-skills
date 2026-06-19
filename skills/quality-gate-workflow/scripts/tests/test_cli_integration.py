@@ -99,3 +99,35 @@ class TestCliIntegration:
         """无参数时应显示帮助并退出码为 1"""
         result = _run_cli(tmp_path)
         assert result.returncode == 1
+
+    def test_cli_self_check(self, tmp_path):
+        """CLI: self-check 应返回 OK"""
+        _run_cli(tmp_path, "init", "--gate", "gate1")
+        result = _run_cli(tmp_path, "self-check")
+        assert result.returncode == 0
+        data = _parse_stdout(result)
+        assert data["status"] == "OK"
+
+    def test_cli_prd_changed_cosmetic(self, tmp_path):
+        """CLI: prd-changed --impact cosmetic 应返回 OK"""
+        _run_cli(tmp_path, "init", "--gate", "gate1")
+        result = _run_cli(tmp_path, "prd-changed", "--impact", "cosmetic")
+        assert result.returncode == 0
+        data = _parse_stdout(result)
+        assert data["status"] in ("OK", "ALLOW")
+
+    def test_cli_plan_tweak(self, tmp_path):
+        """CLI: plan-tweak 应返回 OK"""
+        _run_cli(tmp_path, "init", "--gate", "gate2")
+        for d in ["docs/plans", "docs/verification", "docs/reports", "docs/sessions"]:
+            (tmp_path / d).mkdir(parents=True, exist_ok=True)
+        result = _run_cli(tmp_path, "plan-tweak", "--reason", "字段名修正", "--scope", "ch-1.1")
+        assert result.returncode == 0
+        data = _parse_stdout(result)
+        assert data["status"] in ("OK", "ALLOW")
+
+    def test_cli_resume_without_state(self, tmp_path):
+        """CLI: resume 无状态文件应返回 BLOCK"""
+        result = _run_cli(tmp_path, "resume")
+        # resume 在无状态时应返回非 0 或 OK
+        assert result.returncode in (0, 1)

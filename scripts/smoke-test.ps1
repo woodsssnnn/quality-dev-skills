@@ -1,7 +1,7 @@
 # smoke-test.ps1 — 快速冒烟测试新子命令
 param()
 $ErrorActionPreference = "Continue"
-$repo = "c:\Users\Admin\.agents\skills-source\quality-dev-skills"
+$repo = Split-Path -Parent $PSScriptRoot
 $enforcer = "$repo\skills\quality-gate-workflow\scripts\gate-enforcer.py"
 $tmp = Join-Path $env:TEMP "qgw-smoke-$(Get-Random)"
 

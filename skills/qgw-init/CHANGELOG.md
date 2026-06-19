@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.0.1 (2026-06-19)
+
+- SKILL.md 补齐 `category` / `triggers` / `integration` frontmatter
+- 版本号跟随项目升级至 0.8.0.1
+
+---
+
 ## 0.8.0.0 (2026-06-18)
 
 - 初始版本：交互式 7 步引导 + 非交互式 qgw-init.sh 脚本

@@ -141,7 +141,7 @@ echo "[6/13] dev_rule 配置..."
 if [ -f "CLAUDE.md" ]; then
     # 优先检查 dev_rule_path（新方式）
     if grep -q "dev_rule_path" "CLAUDE.md" 2>/dev/null; then
-        dev_rule_path=$(grep -oP 'dev_rule_path[：:]\s*`?[^`\n]+`?' "CLAUDE.md" | head -1 | sed 's/dev_rule_path[：:]\s*`//;s/`$//')
+        dev_rule_path=$(grep -oE 'dev_rule_path[：:][[:space:]]*`?[^`]+`?' "CLAUDE.md" | head -1 | sed 's/dev_rule_path[：:][[:space:]]*`//;s/`$//')
         echo "  已声明 dev_rule_path: $dev_rule_path"
         
         # 验证路径是否存在

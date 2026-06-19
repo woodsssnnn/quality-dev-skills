@@ -1,6 +1,6 @@
 {
   "id": "db-migration-gate",
-  "version": "0.8.0.0",
+  "version": "0.8.0.1",
   "path": "skills/db-migration-gate",
   "description": "数据库迁移门禁：检查迁移文件安全性，防止危险 schema 变更进入生产环境",
   "category": "vertical",

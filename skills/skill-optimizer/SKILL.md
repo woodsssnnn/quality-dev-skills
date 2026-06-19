@@ -1,6 +1,7 @@
 ---
 name: skill-optimizer
-description: "按最佳实践规则优化已有技能的质量。通过 rollout → score → bounded edit → gate 循环持续提升技能 SKILL.md 的合规度与可用性。Triggers on: --optimize, 优化技能, 优化skill, skill质量, skill评分, optimize skill."
+category: optimization
+description: "Use when optimizing existing skill quality by best-practice rules. Triggers on: --optimize, 优化技能, 优化skill, skill质量, skill评分, optimize skill."
 allowed-tools:
   - Task
   - Agent
@@ -10,8 +11,23 @@ allowed-tools:
   - Bash
   - Write
   - Edit
+triggers:
+  parameters:
+    - --optimize
+  keywords:
+    - 优化
+    - optimize
+    - score
+    - 评分
+    - skill质量
 metadata:
-  version: 0.8.0.0
+  version: 0.8.0.1
+integration:
+  extends:
+    - quality-gate-workflow
+  extended_by: []
+  shares_artifacts_with:
+    - quality-gate-workflow
 ---
 
 # Skill Optimizer

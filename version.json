@@ -1,7 +1,7 @@
 {
   "template": {
     "name": "project-dev-rule-template",
-    "version": "0.8.0.0",
+    "version": "0.8.0.1",
     "description": "项目开发规范技能模板",
     "compatibility": {
       "min_project_version": "0.5.0.0",
@@ -10,27 +10,45 @@
   },
   "skills": {
     "quality-gate-workflow": {
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "description": "质量门禁工作流"
     },
     "skill-optimizer": {
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "description": "技能自动优化框架"
     },
     "qgw-init": {
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "description": "项目初始化引导技能"
     },
     "api-design-review": {
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "description": "API 设计审查门禁"
     },
     "db-migration-gate": {
-      "version": "0.8.0.0",
+      "version": "0.8.0.1",
       "description": "数据库迁移质量门禁"
     }
   },
   "changelog": [
+    {
+      "version": "0.8.0.1",
+      "date": "2026-06-19",
+      "changes": [
+        "P0: 修复 smoke-test.ps1 / validate-all.ps1 硬编码绝对路径，改为动态推断",
+        "P1: 补全 skill-optimizer CHANGELOG (0.7.0.0/0.7.1.0/0.8.0.0)",
+        "P1: 新建 api-design-review / db-migration-gate CHANGELOG.md",
+        "P1: 3 个核心 SKILL.md 补齐 category / triggers / integration frontmatter",
+        "P2: CI shell-check 移除 || true 静默失败，新增 powershell-check job",
+        "P2: release.yml validate-changelog 改为阻断式检查",
+        "P2: health-check.sh grep -oP 改为 grep -oE 兼容 macOS",
+        "P2: check-compatibility.sh 支持 4 级版本号 + set -euo pipefail",
+        "P2: run-evals.ps1 Phase 2 补充 plan-tweak CLI 冒烟测试",
+        "P3: 新增 test_self_check.py (8 个用例)",
+        "P3: test_cli_integration.py 补充 self-check / prd-changed / plan-tweak / resume CLI 测试",
+        "测试总数: 103 → 115"
+      ]
+    },
     {
       "version": "0.8.0.0",
       "date": "2026-06-18",

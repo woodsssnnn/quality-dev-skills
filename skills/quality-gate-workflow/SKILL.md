@@ -1,5 +1,6 @@
 ---
 name: quality-gate-workflow
+category: quality-assurance
 description: |-
   Use when user requests quality-gated development workflow for requirements-to-code traceability,
   or when implementing features that need full traceability from PRD to code.
@@ -14,8 +15,27 @@ allowed-tools:
   - Bash(git diff *)
   - Bash(git status *)
   - Bash(git log *)
+triggers:
+  parameters:
+    - --gate1
+    - --gate2
+    - --all
+    - --self
+    - --analyze
+  keywords:
+    - 质量门禁
+    - gate
+    - plan
+    - verifier
+    - 验收
 metadata:
-  version: 0.8.0.0
+  version: 0.8.0.1
+integration:
+  extends: []
+  extended_by:
+    - skill-optimizer
+  shares_artifacts_with:
+    - skill-optimizer
 ---
 
 # 质量门禁工作流

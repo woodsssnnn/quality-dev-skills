@@ -2,6 +2,47 @@
 
 All notable changes to skill-optimizer will be documented in this file.
 
+## [0.8.0.1] - 2026-06-19
+
+### Changed
+- SKILL.md 补齐 `category` / `triggers` / `integration` frontmatter
+- description 改为 “Use when…” 格式
+- 版本号跟随项目升级至 0.8.0.1
+
+---
+
+## [0.8.0.0] - 2026-06-18
+
+### Added
+- 新增 `references/scoring-rules.md`：9 条评分规则独立文档，支持细粒度打分
+- evaluate.py 大幅增强：新增 `--dry-run`、`--target-score` 参数，支持多技能批量评估
+- 新增技能清单 manifest 集成：优化结果可写入 skill-manifest.json
+
+### Changed
+- 版本号跟随项目升级至 0.8.0.0（生态升级版本）
+
+---
+
+## [0.7.1.0] - 2026-06-18
+
+### Changed
+- Prompt 瘦身：优化 rollout 指令精简重复内容
+- 版本号跟随项目升级至 0.7.1.0
+
+---
+
+## [0.7.0.0] - 2026-06-18
+
+### Added
+- 集成确定性执行引擎：优化循环由 gate-enforcer.py 状态机驱动
+- 新增反模式规则：gate-enforcer BLOCK 时禁止绕过
+
+### Changed
+- evaluate.py 输出格式对齐引擎 JSON 协议
+- 版本号跟随项目升级至 0.7.0.0
+
+---
+
 ## [0.6.0.0] - 2026-06-18
 
 ### Changed

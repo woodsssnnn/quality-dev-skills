@@ -1,5 +1,6 @@
 ---
 name: qgw-init
+category: initialization
 description: |-
   Use when initializing QGW workspace for a new project.
   Triggers on: --init, "初始化 QGW", "initialize QGW", "setup QGW", "setup quality gate".
@@ -14,8 +15,23 @@ allowed-tools:
   - Bash(python *)
   - Bash(bash *)
   - Bash(cat *)
+triggers:
+  parameters:
+    - --init
+  keywords:
+    - 初始化
+    - init
+    - 初始化 QGW
+    - setup QGW
+    - setup quality gate
 metadata:
-  version: 0.8.0.0
+  version: 0.8.0.1
+integration:
+  extends: []
+  extended_by:
+    - quality-gate-workflow
+  shares_artifacts_with:
+    - quality-gate-workflow
 ---
 
 # QGW Init — 项目初始化向导
