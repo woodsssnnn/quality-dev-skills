@@ -32,7 +32,18 @@ if [ -f "$PROJECT_ROOT/CLAUDE.md" ]; then
   fi
 fi
 
-# 4. 读取版本信息
+# 4. 读取进化状态
+EVOLUTION_COUNT="unknown"
+LAST_EVOLVE="unknown"
+if [ -f "$SKILL_DIR/SKILL.md" ]; then
+  EVOLUTION_COUNT=$(grep "evolution_count:" "$SKILL_DIR/SKILL.md" | head -1 | cut -d: -f2 | tr -d ' ')
+  # 从进化日志读取最近进化日期
+  if [ -f "$SKILL_DIR/evolution-log.md" ]; then
+    LAST_EVOLVE=$(grep "^|" "$SKILL_DIR/evolution-log.md" | tail -1 | cut -d'|' -f2 | tr -d ' ')
+  fi
+fi
+
+# 5. 读取版本信息
 VERSION=$(grep "template_version:" "$SKILL_DIR/SKILL.md" | head -1 | cut -d: -f2 | tr -d ' ')
 GENERATED_AT=$(grep "generated_at:" "$SKILL_DIR/SKILL.md" | head -1 | cut -d: -f2 | tr -d ' ')
 
@@ -43,6 +54,10 @@ echo "   技能位置: $SKILL_DIR"
 echo "   模板版本: $VERSION"
 echo "   生成时间: $GENERATED_AT"
 echo "   强度级别: $INTENSITY_LEVEL"
+echo "   进化次数: $EVOLUTION_COUNT"
+if [ "$LAST_EVOLVE" != "unknown" ] && [ -n "$LAST_EVOLVE" ]; then
+  echo "   最近进化: $LAST_EVOLVE"
+fi
 echo ""
 
 # 6. 根据强度级别显示提示

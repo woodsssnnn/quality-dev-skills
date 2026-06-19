@@ -107,3 +107,39 @@ gate-enforcer.py 在初始化时检查：
 - 技能间通信格式变更必须更新 `generator_version`
 - manifest schema 变更遵循 SemVer：Minor 版本新增字段，Major 版本破坏兼容
 - 所有技能必须声明 `compatibility.min_version`
+
+## 6. 技能命名规范
+
+基于 `shared/agent-skills-best-practices.md` §3.1 的动名词推荐，确立本项目命名标准。
+
+### 6.1 命名格式
+
+- **统一格式**：kebab-case（小写字母 + 连字符）
+- **禁止**：下划线、大写字母、空格、连续连字符
+
+### 6.2 命名分类
+
+| 分类 | 命名模式 | 示例 | 说明 |
+|------|---------|------|------|
+| **仓库内技能** | 描述能力（不是实现） | `quality-gate-workflow`、`skill-optimizer` | 放在 `skills/` 目录 |
+| **垂直技能** | 领域+能力 | `api-design-review`、`db-migration-gate` | 放在 `skills/` 目录 |
+| **项目级技能** | 固定名 `project-dev-rule` | `project-dev-rule` | 模板生成物，不随项目变 |
+| **共享模板** | `*-template` 后缀 | `project-dev-rule-template`、`skill-template` | 放在 `shared/` 目录 |
+
+### 6.3 当前技能清单
+
+| ID | 类别 | 命名评估 |
+|----|------|----------|
+| `quality-gate-workflow` | 核心引擎 | ✅ 保持，已广泛使用 |
+| `skill-optimizer` | 优化框架 | ✅ 保持，描述清晰 |
+| `qgw-init` | 初始化 | ✅ 保持，QGW 生态内约定俗成 |
+| `api-design-review` | 垂直技能 | ✅ 保持，动名词形式 |
+| `db-migration-gate` | 垂直技能 | ✅ 保持，名词短语可接受 |
+| `project-dev-rule` | 项目级 | ✅ 保持，固定名不随项目变 |
+
+### 6.4 避免的命名
+
+- 模糊名称：`helper`、`utils`、`tools`
+- 过于泛化：`documents`、`data`、`files`
+- 缩写不展开：除非已约定俗成（如 `qgw`）
+- 集合内命名不一致：同一类技能应遵循相同模式

@@ -84,31 +84,36 @@
     {
       "id": "qgw-init",
       "version": "0.8.0.0",
-      "path": "shared/project-dev-rule-template",
-      "description": "项目初始化技能模板：在 AI 会话内生成项目开发规范，建立质量基线",
+      "path": "skills/qgw-init",
+      "description": "项目初始化向导：7 步交互式引导，完成 QGW 质量门禁 + Dev-Rule 的全套初始化配置",
       "category": "initialization",
       "triggers": {
         "parameters": ["--init"],
-        "keywords": ["初始化", "init", "项目规范", "dev-rule"]
+        "keywords": ["初始化", "init", "初始化 QGW", "setup QGW", "setup quality gate"]
       },
       "inputs": {
-        "required": ["项目名称和描述"],
-        "optional": ["技术栈信息", "团队规模"]
+        "required": ["项目根目录"],
+        "optional": ["--platform", "--mode", "--with-prd", "--yes"]
       },
       "outputs": {
         "artifacts": [
-          "SKILL.md (项目级)",
-          "hooks/on-create.sh",
-          "hooks/on-session-start.sh"
+          ".qgw/config.json",
+          ".qgw/constitution.md",
+          "docs/plans/",
+          "docs/verification/",
+          "docs/reports/",
+          "docs/sessions/"
         ],
         "side_effects": [
-          "在项目根目录创建 .qgw/ 配置目录"
+          "在项目根目录创建 .qgw/ 配置目录",
+          "生成 project-dev-rule 技能骨架",
+          "更新项目 CLAUDE.md / AGENTS.md 绑定"
         ]
       },
       "dependencies": {
-        "runtime": [],
-        "skills": [],
-        "tools": ["Read", "Write", "Bash"]
+        "runtime": ["python>=3.8"],
+        "skills": ["quality-gate-workflow"],
+        "tools": ["Read", "Write", "Bash", "Grep", "Glob"]
       },
       "compatibility": {
         "min_version": "0.5.0.0",
@@ -116,8 +121,74 @@
       },
       "integration_points": {
         "extends": [],
-        "extended_by": ["quality-gate-workflow"],
-        "shares_artifacts_with": []
+        "extended_by": ["quality-gate-workflow", "project-dev-rule"],
+        "shares_artifacts_with": ["quality-gate-workflow"]
+      }
+    },
+    {
+      "id": "api-design-review",
+      "version": "0.8.0.0",
+      "path": "skills/api-design-review",
+      "description": "REST API 设计审查：检查 URL 命名、HTTP 方法、响应码、分页和 OpenAPI 一致性",
+      "category": "vertical",
+      "triggers": {
+        "parameters": ["--api-review"],
+        "keywords": ["API review", "REST convention", "endpoint design", "OpenAPI"]
+      },
+      "inputs": {
+        "required": ["OpenAPI spec 文件（JSON）或路由定义文件"],
+        "optional": ["--routes 模式标记"]
+      },
+      "outputs": {
+        "artifacts": [],
+        "side_effects": ["控制台输出检查结果"]
+      },
+      "dependencies": {
+        "runtime": ["python>=3.8"],
+        "skills": ["quality-gate-workflow"],
+        "tools": ["Read", "Bash"]
+      },
+      "compatibility": {
+        "min_version": "0.5.0.0",
+        "platforms": ["claude-code", "codex", "opencode", "minocode", "general"]
+      },
+      "integration_points": {
+        "extends": ["quality-gate-workflow"],
+        "extended_by": [],
+        "shares_artifacts_with": ["quality-gate-workflow"]
+      }
+    },
+    {
+      "id": "db-migration-gate",
+      "version": "0.8.0.0",
+      "path": "skills/db-migration-gate",
+      "description": "数据库迁移门禁：检查迁移文件安全性，防止危险 schema 变更进入生产环境",
+      "category": "vertical",
+      "triggers": {
+        "parameters": ["--db-migration"],
+        "keywords": ["migration review", "db migration", "schema change", "alembic", "flyway"]
+      },
+      "inputs": {
+        "required": ["迁移文件目录或文件路径"],
+        "optional": ["--strict"]
+      },
+      "outputs": {
+        "artifacts": [],
+        "side_effects": ["控制台输出检查结果"]
+      },
+      "dependencies": {
+        "runtime": ["python>=3.8"],
+        "skills": ["quality-gate-workflow"],
+        "tools": ["Read", "Bash"]
+      },
+      "compatibility": {
+        "min_version": "0.5.0.0",
+        "platforms": ["claude-code", "codex", "opencode", "minocode", "general"]
+      },
+      "integration_points": {
+        "extends": ["quality-gate-workflow"],
+        "extended_by": [],
+        "shares_artifacts_with": ["quality-gate-workflow"]
       }
     }
   ]

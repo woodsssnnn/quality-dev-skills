@@ -29,9 +29,10 @@ if [ ! -f "$SKILL_DIR/SKILL.md" ]; then
   exit 1
 fi
 
-# 4. 检查SKILL.md是否已填写
-if grep -q "\[AI根据项目上下文" "$SKILL_DIR/SKILL.md"; then
-  echo "⚠️  SKILL.md 包含占位符，请先完成内容生成"
+# 4. 检查 SKILL.md 是否包含必要的章节结构
+if ! grep -q "## 核心规则" "$SKILL_DIR/SKILL.md"; then
+  echo "⚠️  SKILL.md 缺少必要的章节结构"
+  echo "请确认使用了最新的骨架模板"
   exit 1
 fi
 

@@ -886,6 +886,40 @@ QGW-Items: {item_count} items
 
 ---
 
+## P5-evolve：Dev-Rule 进化检查
+
+> 输出: `[qgw:gate1:P5-evolve] Dev-Rule 进化检查 ...` / `✅ 新增 N 条规则` 或 `✅ 无新增`
+
+**引擎交互**：作为 P5 的子步骤执行，不独立注册到 gate-enforcer 状态机。
+
+**触发条件**（满足任一即执行）：
+- P1.7 PM 顾问有被接受的 ISSUE
+- P2.5 架构师顾问有被接受的 ISSUE
+- P1 有澄清记录（`_clarifications.md` 存在且非空）
+- 架构师根因簇 ≥ 3 项
+
+**执行流程**：
+
+1. 读取 `.qgw/config.json` 的 `dev_rule` 配置
+2. 如 `dev_rule.auto_evolve == false`，跳过并输出 `[qgw:gate1:P5-evolve] ⏭️ 已禁用`
+3. 读取 `dev_rule.path`/SKILL.md
+4. 从本次 Gate 1 产出中提取新规则（按 evolution-protocol.md §2.1 触发条件表）：
+   - 术语表：P1 可验证项中的业务术语 + P1 澄清结论
+   - 核心规则：被接受的 PM ISSUE + 被接受的架构师 ISSUE
+5. grep 已有规则标题（`### CR-` 和 `### AP-`），避免重复
+6. 追加到 SKILL.md 对应章节
+7. 在进化日志追加一行记录
+8. 更新 frontmatter `evolution_count += 1`
+9. 输出：`[qgw:gate1:P5-evolve] ✅ 新增 CR-{N}、术语 {M} 条`
+
+**无进化时**：
+输出 `[qgw:gate1:P5-evolve] ✅ 本次无新增规则（无被接受 ISSUE）`
+仍递增 `evolution_count`（记录检查次数）。
+
+**规则格式**：见 `shared/project-dev-rule-template/references/evolution-protocol.md` §1。
+
+---
+
 ## Bug 模式
 
 **P1-Bug**：提取 bug 症状 + 预期行为 + 影响范围 + 根因假设

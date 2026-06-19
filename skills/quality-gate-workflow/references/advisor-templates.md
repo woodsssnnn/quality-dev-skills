@@ -33,6 +33,24 @@
 
 verifier 局限：只能问"plan 是否覆盖 PRD"，问不了"架构选型是否合理"或"PRD 表述是笔误还是业务原意"。
 
+## 变量注入机制
+
+顾问 prompt 模板中的 `{{变量}}` 在派发前由主代理解析替换。变量来源：
+
+| 变量 | 来源 | 未配置时 |
+|------|------|----------|
+| `{{PROJECT_DOMAIN}}` | `.qgw/config.json` → `advisor.project_domain` | 空字符串 |
+| `{{PROJECT_TECH_STACK}}` | `.qgw/config.json` → `advisor.tech_stack` | 空字符串 |
+| `{{PROJECT_GLOSSARY}}` | `.qgw/config.json` → `advisor.glossary_path` 文件内容 | 空字符串 |
+| `{{DEV_RULE_SUMMARY}}` | `dev_rule.path`/SKILL.md 前 50 行 | 空字符串 |
+| `{{PROJECT_CONVENTIONS}}` | `dev_rule.path`/SKILL.md 核心规则章节 | 空字符串 |
+| `{{REFERENCE_SKILLS}}` | `.qgw/config.json` → `reference_skills` ID 列表 | 空字符串 |
+
+**覆盖优先级**（从高到低）：
+1. `.qgw/templates/advisor-pm.md` 或 `.qgw/templates/advisor-arch.md`（完整覆盖）
+2. 本文件模板 + `{{变量}}` 替换（中等优先级）
+3. 本文件默认模板（fallback）
+
 ---
 
 ## P1.7 PM 顾问（需求合理性评议）
@@ -47,6 +65,15 @@ verifier 局限：只能问"plan 是否覆盖 PRD"，问不了"架构选型是�
 - PRD 原文：[PRD 文件路径]
 - 原型图/流程图（如有）：[图片目录路径]
 - 项目澄清文件（如有）：[_clarifications.md 路径或"无"]
+
+## 项目背景
+
+- 项目领域：{{PROJECT_DOMAIN}}
+- 技术栈：{{PROJECT_TECH_STACK}}
+- 业务术语表：{{PROJECT_GLOSSARY}}
+- 当前开发规范摘要：{{DEV_RULE_SUMMARY}}
+
+请基于以上项目背景进行评议，而非通用产品视角。如变量为空则忽略对应项。
 
 ## 评议维度（逐项检查，发现即标记 ISSUE）
 
@@ -157,6 +184,16 @@ Q[N]: [隐含需求描述]
 - P1.6 调用点清单（已含传入参数列）：[plan 中的 Code Chain Investigation 章节]
 - 现有代码结构（grep 结果）：[关键目录树或 grep 输出]
 - PM 顾问报告（P1.7）：[报告内容或"无"]
+
+## 项目背景
+
+- 项目领域：{{PROJECT_DOMAIN}}
+- 技术栈：{{PROJECT_TECH_STACK}}
+- 当前编码规范：{{PROJECT_CONVENTIONS}}
+- 参考技能模式索引：{{REFERENCE_SKILLS}}
+- 当前开发规范摘要：{{DEV_RULE_SUMMARY}}
+
+请基于以上项目背景进行评议，而非通用架构视角。如变量为空则忽略对应项。
 
 ## 评议维度（逐项检查，发现即标记 ISSUE）
 

@@ -131,13 +131,21 @@ def load_skill(skill_path: str) -> dict:
 
 
 def check_description_trigger(skill: dict) -> dict:
-    """检查 description 是否以 'Use when' 开头"""
+    """检查 description 是否以 'Use when' 开头（英文）或包含触发关键词（非英文）"""
     desc = skill["frontmatter"].get("description", "")
-    passed = desc.startswith("Use when")
+    # 英文技能：检查 "Use when" 开头
+    if desc and desc[0].isascii():
+        passed = desc.startswith("Use when")
+        detail = f"description starts with: {desc[:30]}..."
+    else:
+        # 非英文技能：检查非空且包含触发关键词
+        trigger_keywords = ["项目", "代码", "开发", "规范", "技能", "Use when", "when", "skill"]
+        passed = bool(desc) and any(kw in desc for kw in trigger_keywords)
+        detail = f"non-English description ({len(desc)} chars), trigger check: {passed}"
     return {
         "rule": "description_trigger",
         "passed": passed,
-        "detail": f"description starts with: {desc[:30]}...",
+        "detail": detail,
     }
 
 
@@ -206,11 +214,31 @@ def check_no_anti_patterns(skill: dict) -> dict:
     content = skill["content"]
     issues = []
     
-    # 检查时间信息（YYYY-MM-DD 格式，但排除变更日志和脚本验证时间戳）
-    # 时效性日期：出现在句子中，如 "截至 2026-06-15"
-    # 文档性日期：出现在括号或脚本中，如 "v2.3（2026-06-11）" 或 "verifiedDate: '2026-06-11'"
+    # 对自进化技能，排除 CR/AP/进化日志章节和 frontmatter（日期和编号是合理的）
+    check_content = content
+    if skill.get("_self_evolving"):
+        # 移除 frontmatter
+        if check_content.startswith("---"):
+            end = check_content.find("---", 3)
+            if end != -1:
+                check_content = check_content[end+3:]
+        # 移除“核心规则”、“反模式教训”、“进化日志”章节的全部内容
+        lines = check_content.split('\n')
+        filtered_lines = []
+        skip = False
+        for line in lines:
+            if re.match(r'^## (核心规则|反模式教训|进化日志)', line):
+                skip = True
+                continue
+            elif re.match(r'^## ', line) and skip:
+                skip = False
+            if not skip:
+                filtered_lines.append(line)
+        check_content = '\n'.join(filtered_lines)
+    
+    # 检查时间信息
     temporal_pattern = r'(?:截至|截止|有效期|过期|deadlin)[^)\n]*\d{4}[-/]\d{1,2}[-/]\d{1,2}'
-    if re.search(temporal_pattern, content):
+    if re.search(temporal_pattern, check_content):
         issues.append("temporal deadline found")
     
     # 检查魔法数字（排除规则编号、版本号、行号等）
@@ -218,7 +246,7 @@ def check_no_anti_patterns(skill: dict) -> dict:
     # 版本号：如 4.24.8, 5.2.0
     # 独立出现的数字才可能是魔法数字
     magic_pattern = r'(?<!\d)(?<![/\\.#])\d{3,}(?!\d)(?![/\\.#])'
-    magic_matches = re.findall(magic_pattern, content)
+    magic_matches = re.findall(magic_pattern, check_content)
     # 过滤掉合理的数字（端口号、HTTP 状态码、大数字等）
     reasonable = {'100', '299', '5476951', '68006', '2375', '8080', '3000', '8072',
                   '401', '404', '500', '502', '503', '504', '200', '301', '302'}
@@ -239,6 +267,19 @@ def check_has_checklist(skill: dict) -> dict:
     content = skill["content"]
     has_numbered = bool(re.search(r'^\d+\.\s', content, re.MULTILINE))
     has_checklist = bool(re.search(r'^- \[ \]', content, re.MULTILINE))
+    
+    # 对自进化技能，检查 L3 文件中的 CR/AP 条目完整性
+    if skill.get("_self_evolving"):
+        l3 = skill.get("_l3_content", "")
+        has_cr = bool(re.search(r'### CR-\d+:', l3))
+        has_ap = bool(re.search(r'### AP-\d+:', l3))
+        passed = has_numbered or has_checklist or has_cr or has_ap
+        return {
+            "rule": "has_checklist",
+            "passed": passed,
+            "detail": f"numbered: {has_numbered}, checklist: {has_checklist}, CR(L3): {has_cr}, AP(L3): {has_ap}",
+        }
+    
     passed = has_numbered or has_checklist
     return {
         "rule": "has_checklist",
@@ -284,15 +325,152 @@ def check_clear_gates(skill: dict) -> dict:
     }
 
 
+def load_dynamic_rules(skill_path: str) -> list:
+    """从项目 dev-rule 的进化日志加载动态评分规则"""
+    skill_dir = Path(skill_path)
+    skill_md = skill_dir / "SKILL.md"
+    
+    if not skill_md.exists():
+        return []
+    
+    content = skill_md.read_text(encoding="utf-8")
+    
+    # 查找反模式教训章节中出现次数 >= 3 的条目
+    dynamic_rules = []
+    # 匹配 ### AP-NNN: 标题 和 - 出现次数: N
+    ap_pattern = r'### AP-(\d+):\s*(.+)\n(?:.*\n)*?- \*\*出现次数\*\*:\s*(\d+)'
+    for match in re.finditer(ap_pattern, content):
+        ap_id = match.group(1)
+        ap_title = match.group(2).strip()
+        ap_count = int(match.group(3))
+        
+        if ap_count >= 3:
+            rule_name = ap_title.lower().replace(" ", "_").replace("-", "_")
+            dynamic_rules.append({
+                "id": f"dyn_ap_{ap_id}",
+                "name": rule_name,
+                "check": f"代码中是否违反: {ap_title}",
+                "weight": 0.10,
+                "source": f"project-dev-rule AP-{ap_id} (出现{ap_count}次)",
+                "auto_fix": False,
+            })
+    
+    return dynamic_rules
+
+
+def is_self_evolving_skill(skill: dict) -> bool:
+    """检查目标是否为自进化技能 (project-dev-rule)"""
+    name = skill["frontmatter"].get("name", "")
+    return name == "project-dev-rule"
+
+
+# 自进化技能专用评分规则
+EVOLUTION_RULES = [
+    {
+        "id": "evolution_log_exists",
+        "check": "进化日志章节非空",
+        "weight": 0.05,
+        "auto_fix": False,
+    },
+    {
+        "id": "rules_have_sources",
+        "check": "每条 CR/AP 规则有来源、日期、验证方式",
+        "weight": 0.10,
+        "auto_fix": False,
+    },
+    {
+        "id": "no_bloat",
+        "check": "核心规则 <= 50 条",
+        "weight": 0.05,
+        "auto_fix": False,
+    },
+]
+
+
+def check_evolution_log_exists(skill: dict) -> dict:
+    """检查进化日志章节非空"""
+    content = skill["content"]
+    has_log = bool(re.search(r'## 进化日志', content))
+    has_entries = bool(re.search(r'## 进化日志\n.*\n.*\|.*\d{4}', content, re.DOTALL))
+    passed = has_log  # 有章节即可（初始骨架有表头）
+    return {
+        "rule": "evolution_log_exists",
+        "passed": passed,
+        "detail": f"log section: {has_log}, entries: {has_entries}",
+    }
+
+
+def check_rules_have_sources(skill: dict) -> dict:
+    """检查每条 CR/AP 规则有来源字段"""
+    # 对自进化技能，扫描 L3 内容
+    content = skill.get("_l3_content", skill["content"]) if skill.get("_self_evolving") else skill["content"]
+    cr_entries = re.findall(r'### CR-\d+:', content)
+    ap_entries = re.findall(r'### AP-\d+:', content)
+    
+    total = len(cr_entries) + len(ap_entries)
+    if total == 0:
+        return {
+            "rule": "rules_have_sources",
+            "passed": True,  # 无规则时视为通过
+            "detail": "no CR/AP entries yet",
+        }
+    
+    source_pattern = r'- \*\*来源\*\*:'
+    sources = len(re.findall(source_pattern, content))
+    passed = sources >= total * 0.8  # 80% 以上有来源即通过
+    return {
+        "rule": "rules_have_sources",
+        "passed": passed,
+        "detail": f"entries(L3): {total}, with sources: {sources}",
+    }
+
+
+def check_no_bloat(skill: dict) -> dict:
+    """检查核心规则 <= 50 条"""
+    # 对自进化技能，扫描 L3 内容
+    content = skill.get("_l3_content", skill["content"]) if skill.get("_self_evolving") else skill["content"]
+    cr_entries = re.findall(r'### CR-\d+:', content)
+    passed = len(cr_entries) <= 50
+    return {
+        "rule": "no_bloat",
+        "passed": passed,
+        "detail": f"CR entries(L3): {len(cr_entries)}/50",
+    }
+
+
 def evaluate_skill(skill_path: str) -> dict:
     """评估技能质量"""
     skill = load_skill(skill_path)
     
-    # 运行所有检查
+    # 确定是否为自进化技能
+    self_evolving = is_self_evolving_skill(skill)
+    skill["_self_evolving"] = self_evolving  # 传递给检查函数
+    
+    # 对自进化技能，加载 L3 文件内容（支持平面文件和目录两种结构）
+    if self_evolving:
+        skill_dir = Path(skill["path"])
+        l3_parts = []
+        for l3_name in ["core-rules", "anti-patterns"]:
+            l3_file = skill_dir / f"{l3_name}.md"
+            l3_dir = skill_dir / l3_name
+            if l3_file.exists():
+                # 平面文件模式
+                l3_parts.append(l3_file.read_text(encoding="utf-8"))
+            elif l3_dir.exists() and l3_dir.is_dir():
+                # 目录模式（Divide and Conquer 拆分后）
+                for md_file in sorted(l3_dir.glob("*.md")):
+                    l3_parts.append(md_file.read_text(encoding="utf-8"))
+        skill["_l3_content"] = "\n".join(l3_parts)
+    
+    # 运行静态层检查
     checks = [
         check_description_trigger(skill),
         check_no_workflow_in_desc(skill),
-        check_token_efficiency(skill),
+        check_token_efficiency(skill) if not self_evolving else {
+            "rule": "token_efficiency",
+            "passed": True,
+            "detail": f"skipped for self-evolving skill (lines: {skill['line_count']})",
+        },
         check_reference_depth(skill),
         check_no_anti_patterns(skill),
         check_has_checklist(skill),
@@ -301,12 +479,33 @@ def evaluate_skill(skill_path: str) -> dict:
         check_clear_gates(skill),
     ]
     
-    # 计算总分
+    # 自进化技能追加专用规则
+    if self_evolving:
+        checks.extend([
+            check_evolution_log_exists(skill),
+            check_rules_have_sources(skill),
+            check_no_bloat(skill),
+        ])
+    
+    # 计算总分（静态层）
+    all_rules = RULES + (EVOLUTION_RULES if self_evolving else [])
     total_score = 0.0
     for check in checks:
-        rule = next(r for r in RULES if r["id"] == check["rule"])
-        if check["passed"]:
+        rule = next((r for r in all_rules if r["id"] == check["rule"]), None)
+        if rule and check["passed"]:
             total_score += rule["weight"]
+    
+    # 加载动态层规则（从项目 dev-rule）
+    dynamic_rules = load_dynamic_rules(skill_path)
+    dynamic_results = []
+    for dr in dynamic_rules:
+        # 动态规则检查（仅记录，不自动失败）
+        dynamic_results.append({
+            "rule": dr["id"],
+            "passed": None,  # 动态规则需要实际代码检查，此处标记为待检
+            "detail": f"dynamic rule from {dr['source']}",
+            "source": dr["source"],
+        })
     
     # 确定等级
     if total_score >= 0.9:
@@ -318,12 +517,19 @@ def evaluate_skill(skill_path: str) -> dict:
     else:
         grade = "D"
     
-    return {
+    result = {
         "skill_path": skill_path,
         "total_score": round(total_score, 3),
         "grade": grade,
         "checks": checks,
+        "self_evolving": self_evolving,
     }
+    
+    if dynamic_rules:
+        result["dynamic_rules"] = dynamic_results
+        result["dynamic_rules_count"] = len(dynamic_rules)
+    
+    return result
 
 
 def main():

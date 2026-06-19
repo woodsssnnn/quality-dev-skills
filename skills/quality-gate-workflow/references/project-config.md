@@ -137,3 +137,85 @@ quality-gate-workflow运行时会：
 
 - gate_dev_rules: your-project-dev-rule
 ```
+
+## reference_skills：参考技能声明
+
+声明上游技能作为参考资源（不是依赖）。Gate 2 S2 实现时按需加载。
+
+```json
+{
+  "reference_skills": [
+    {
+      "id": "-dev-rule",
+      "path": ".claude/skills/-dev-rule",
+      "role": "pattern_source",
+      "load_scope": ["references/backend/patterns", "references/frontend/patterns", "references/frontend/rules"]
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | string | 技能标识符 |
+| `path` | string | 技能目录路径（相对项目根目录） |
+| `role` | string | 角色类型：`pattern_source`（模式参考） / `rule_source`（规则参考） |
+| `load_scope` | string[] | 加载范围（仅加载指定子目录，避免全量加载） |
+
+**与 project-dev-rule 的关系**：参考技能是只读输入，project-dev-rule 是活输出。冲突时 project-dev-rule 优先。
+
+## advisor：顾问角色配置
+
+配置顾问子代理的项目身份注入参数。
+
+```json
+{
+  "advisor": {
+    "project_domain": "TCL Finance — 基于  5.2.0 流程管理平台的客户定制交付项目",
+    "tech_stack": "后端 Java/Spring Boot/MyBatis, 前端 React/Next.js/antd v4/Formily",
+    "glossary_path": ".qgw/glossary.md",
+    "conventions_summary_path": ".agents/skills/project-dev-rule/SKILL.md"
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `project_domain` | string | 项目业务领域描述，注入 PM/架构师顾问 prompt |
+| `tech_stack` | string | 技术栈摘要，注入顾问 prompt |
+| `glossary_path` | string | 术语表文件路径，注入 PM 顾问 prompt |
+| `conventions_summary_path` | string | 编码规范摘要路径，注入架构师顾问 prompt |
+
+变量解析规则详见 `advisor-templates.md` “变量注入机制”章节。
+
+## dev_rule：自进化配置
+
+配置 project-dev-rule 的自进化行为。
+
+```json
+{
+  "dev_rule": {
+    "path": ".agents/skills/project-dev-rule",
+    "auto_evolve": true,
+    "evolve_threshold": {
+      "error_pattern_frequency": 3,
+      "advisor_cluster_size": 3
+    }
+  }
+}
+```
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `path` | string | `.agents/skills/project-dev-rule` | dev-rule 技能目录路径 |
+| `auto_evolve` | bool | `true` | 是否在 Gate 完成后自动执行 evolve 检查 |
+| `evolve_threshold.error_pattern_frequency` | int | `3` | error-patterns 升级为核心规则的频率阈值 |
+| `evolve_threshold.advisor_cluster_size` | int | `3` | 顾问根因簇升级为核心规则的数量阈值 |
+
+### 向后兼容
+
+| 旧配置 | 新配置 | 迁移方式 |
+|---------|---------|----------|
+| CLAUDE.md `dev_rule_path` | `dev_rule.path` | 两者均支持，新配置优先 |
+| CLAUDE.md `gate_dev_rules` | `reference_skills` | `gate_dev_rules` 作为 reference_skills 的简化别名 |
+| 无 | `advisor` | 纯新增字段，不影响旧项目 |

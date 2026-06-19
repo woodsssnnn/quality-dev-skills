@@ -196,3 +196,82 @@ total_score = sum(rule_weight * rule_pass for rule in rules)
 | 0.7 - 0.9 | B | 良好，有改进空间 |
 | 0.5 - 0.7 | C | 及格，需要优化 |
 | < 0.5 | D | 不及格，需要重写 |
+
+---
+
+## 动态层（项目级规则）
+
+> 静态层 9 条规则来自 `shared/agent-skills-best-practices.md`，适用于所有技能。
+> 动态层从项目实际经验中提取规则，仅影响项目内技能评分。
+
+### 加载机制
+
+1. 检查项目 `.qgw/config.json` 是否声明了 `dev_rule.path`
+2. 如存在，读取 `dev_rule.path`/SKILL.md 的进化日志章节
+3. 提取出现次数 ≥ 3 的 AP 条目，转化为动态评分规则
+
+### 动态规则格式
+
+```python
+# 从 AP-NNN 条目生成
+dynamic_rules = [
+    {
+        "id": f"dyn_{ap_id}",
+        "name": ap_title.lower().replace(" ", "_"),
+        "check": f"代码中是否违反: {ap_pattern}",
+        "weight": 0.10,
+        "source": f"project-dev-rule AP-{ap_id} (出现{ap_count}次)",
+        "auto_fix": False
+    }
+]
+```
+
+### 动态规则属性
+
+| 属性 | 值 | 说明 |
+|------|-----|------|
+| `weight` | 0.10 | 固定权重（与静态规则同等重要） |
+| `auto_fix` | False | 动态规则不自动修复，只提供建议 |
+| `scope` | 项目内 | 仅影响当前项目的技能评分 |
+
+### 示例
+
+假设 project-dev-rule 中有：
+```
+### AP-003: SQL 字段别名未验证
+- 出现次数: 4
+- 反模式: 后端 SQL SELECT 别名指向错误列
+```
+
+转化为动态规则：
+```python
+{
+    "id": "dyn_ap_003",
+    "name": "sql_field_alias_verified",
+    "check": "SQL SELECT 别名是否与实际 DB 列名对齐",
+    "weight": 0.10,
+    "source": "project-dev-rule AP-003 (出现4次)"
+}
+```
+
+---
+
+## 自进化技能特殊评分
+
+当评估目标是 `project-dev-rule` 本身时，使用特殊评分规则：
+
+| 规则 | 静态层行为 | 特殊处理 |
+|------|---------|----------|
+| 3. `token_efficiency` | SKILL.md < 500 行 | **跳过**：自进化技能允许超过 500 行 |
+| 6. `has_checklist` | 有有序列表或检查清单 | **特殊检查**：进化日志是否有结构化表格 |
+| 8. `rationalization_table` | 有反模式反驳表 | **特殊检查**：反模式教训章节是否有“正确做法”字段 |
+
+### 新增：进化完整性规则
+
+| ID | 检查内容 | 权重 |
+|----|---------|------|
+| `evolution_log_exists` | 进化日志章节非空（有表头行） | 0.05 |
+| `rules_have_sources` | 每条 CR/AP 规则有来源、日期、验证方式字段 | 0.10 |
+| `no_bloat` | 核心规则 ≤ 50 条 | 0.05 |
+
+这三条规则仅在评估 project-dev-rule 时生效，不影响其他技能评分。

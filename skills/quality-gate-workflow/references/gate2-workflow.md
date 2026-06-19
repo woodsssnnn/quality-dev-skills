@@ -102,13 +102,17 @@ Dev Rule Checklist: [项目 CLAUDE.md dev_rule_path 或 gate_dev_rules]
 
 **读取 Scope**：实现前从 Plan 中读取当前 unit 的 Scope 声明（`allowedChanges` / `forbiddenChanges` / `estimatedLines`）。实现过程中只修改 allowed 路径内的文件，禁止修改 forbidden 路径内的文件。
 
-**Dev-rule 代码骨架**（项目声明了 `dev_rule_path` 或 `gate_dev_rules` 且 Plan 指定了 pattern 时）：
+**Dev-rule 代码骨架**（项目声明了 `dev_rule` / `dev_rule_path` / `gate_dev_rules` 且 Plan 指定了 pattern 时）：
 
-1. 读取 Plan 中标注的 pattern 文件（如 `references/backend/patterns/backend-5.0-pattern/crud-api.md`）
-2. 以 pattern 中的代码骨架为模板实现，保持架构一致
-3. 同时读取 dev-rule 的 rules（如 Track-5.0 rules-5.0/ 或前端 rules/），遵循编码规范
+1. 先读取 `.qgw/config.json` 的 `dev_rule.path`/SKILL.md（项目自生活规范）
+2. 再读取 `reference_skills` 中 `role=pattern_source` 的技能（参考技能）
+3. 读取 Plan 中标注的 pattern 文件（如 `references/backend/patterns/backend-5.0-pattern/crud-api.md`）
+4. 以 pattern 中的代码骨架为模板实现，保持架构一致
+5. 同时读取 dev-rule 的 rules（如 Track-5.0 rules-5.0/ 或前端 rules/），遵循编码规范
 
-未声明 `dev_rule_path`/`gate_dev_rules` 或 Plan 未指定 pattern 时，按常规实现。
+**优先级解析**：project-dev-rule 核心规则 > reference_skills 规则 > 通用规范（冲突时以项目经验结晶为准）。
+
+未声明任何 dev-rule 配置或 Plan 未指定 pattern 时，按常规实现。
 
 ---
 
@@ -520,6 +524,43 @@ QGW-Items: 3/12 PASS, 9 SKIPPED
 3. 确认 `docs/sessions/{session-id}.md` 已写入。未写入 = 反模式 #29。
 4. 确认 PASS 项的 `codeRefs` 和 `commitSha` 已写入。未写入 = 反模式 #30。
 5. **确认 Plan 文档已更新**。未更新 = 反模式 #31（全生命周期闭环断裂）。
+
+---
+
+## S5-evolve：Dev-Rule 进化检查
+
+> 输出: `[qgw:gate2:S5-evolve] Dev-Rule 进化检查 ...` / `✅ 新增 N 条规则` 或 `✅ 无新增`
+
+**引擎交互**：作为 S5 的子步骤执行，不独立注册到 gate-enforcer 状态机。
+
+**触发条件**（满足任一即执行）：
+- S4 verifier 有 FAIL（CODE 根因）
+- S4 横切检查有 FAIL（CC-1~CC-6）
+- Debug 模式修复了 BUG
+- error-patterns frequency ≥ `evolve_threshold.error_pattern_frequency`
+- P2.5 架构师 ISSUE 被接受（从 Gate 1 传递）
+
+**执行流程**：
+
+1. 读取 `.qgw/config.json` 的 `dev_rule` 配置
+2. 如 `dev_rule.auto_evolve == false`，跳过并输出 `[qgw:gate2:S5-evolve] ⏭️ 已禁用`
+3. 读取 `dev_rule.path`/SKILL.md
+4. 从本次 Gate 2 产出中提取新规则（按 evolution-protocol.md §2.2 触发条件表）：
+   - 反模式教训：S4 FAIL 的代码偏差模式 + 横切检查 FAIL + Debug BUG 根因
+   - 核心规则：架构师根因簇升级 + error-patterns 阈值升级
+5. 检查 AP 出现次数，达阈值执行升级（evolution-protocol.md §3）
+6. grep 已有规则标题（`### CR-` 和 `### AP-`），避免重复
+7. 追加到 SKILL.md 对应章节
+8. 在进化日志追加一行记录
+9. 更新 frontmatter `evolution_count += 1`
+10. 如参考资源中有相关 pattern，在规则中引用（如 `参见 -dev-rule/backend-5.0-pattern`）
+11. 输出：`[qgw:gate2:S5-evolve] ✅ 新增 AP-{N}、升级 CR-{M}`
+
+**无进化时**：
+输出 `[qgw:gate2:S5-evolve] ✅ 本次无新增规则`
+仍递增 `evolution_count`（记录检查次数）。
+
+**规则格式**：见 `shared/project-dev-rule-template/references/evolution-protocol.md` §1。
 
 ---
 

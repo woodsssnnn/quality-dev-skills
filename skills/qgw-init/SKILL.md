@@ -111,10 +111,27 @@ metadata:
     "state_file": "docs/.qgw-engine-state.json",
     "checkpoint_dir": "docs/.qgw-checkpoints"
   },
+  "reference_skills": [],
+  "dev_rule": {
+    "path": ".agents/skills/project-dev-rule",
+    "auto_evolve": true,
+    "evolve_threshold": {
+      "error_pattern_frequency": 3,
+      "advisor_cluster_size": 3
+    }
+  },
+  "advisor": {
+    "project_domain": "",
+    "tech_stack": "",
+    "glossary_path": ".qgw/glossary.md",
+    "conventions_summary_path": ".agents/skills/project-dev-rule/SKILL.md"
+  },
   "initialized": "<ISO-8601 timestamp>",
   "version": "0.8.0.0"
 }
 ```
+
+> `reference_skills`、`advisor`、`dev_rule` 均为可选字段。旧 config.json 缺少这些字段时走默认兆底路径。详见 `quality-gate-workflow/references/project-config.md`。
 
 **constitution.md 模板**：
 
@@ -128,6 +145,29 @@ metadata:
 - 所有需求必须明确标注优先级（P0/P1/P2）
 - 功能性需求必须包含验收标准
 - 非功能性需求必须量化指标
+```
+
+### Step 4.5: Dev-Rule 初始化
+
+在项目目录创建自进化 project-dev-rule 技能骨架：
+
+1. **生成骨架**：从 `shared/project-dev-rule-template/structure/SKILL.md.skeleton` 复制到项目的 `.agents/skills/project-dev-rule/SKILL.md`，替换 `{{GENERATED_AT}}`、`{{PROJECT_NAME}}` 占位符
+2. **填写项目身份**：从项目 CLAUDE.md / AGENTS.md 提取项目概述、技术栈、构建命令，写入骨架“项目身份”章节（引用，不重复）
+3. **声明参考资源**：如用户指定了 `reference_skills`，写入骨架“参考资源”章节
+4. **创建辅助文件**：从模板复制 `glossary.md.template` 和 `evolution-log.md.template` 到 `.agents/skills/project-dev-rule/`
+5. **绑定 CLAUDE.md**：在项目 CLAUDE.md 中追加 `dev_rule.path` 配置（如不存在）
+
+**用户交互**：
+- 询问用户是否声明参考技能（如 -dev-rule）
+- 询问用户项目领域和技术栈（或自动从 CLAUDE.md 提取）
+
+输出：
+```
+[qgw-init:Step4.5] Dev-Rule 初始化 ...
+  技能位置: .agents/skills/project-dev-rule/
+  项目身份: ✅ 已填写
+  参考资源: -dev-rule ✅ (或 "无")
+  CLAUDE.md: ✅ 已绑定 dev_rule.path
 ```
 
 ### Step 5: PRD 目录结构创建（可选）
