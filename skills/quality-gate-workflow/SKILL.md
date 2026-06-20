@@ -29,7 +29,7 @@ triggers:
     - verifier
     - 验收
 metadata:
-  version: 0.8.0.1
+  version: 0.8.3.0
 integration:
   extends: []
   extended_by:
@@ -76,6 +76,23 @@ integration:
 **方式 C — 显式参数（推荐进阶用户）**：`--gate1` / `--gate2` / `--all` / `--self` / `--analyze`
 
 **安装**：`bash scripts/install.sh`（首次使用参见 `BOOTSTRAP.md`）| **详细安装** → [references/installation.md](references/installation.md)
+
+---
+
+## 入口点导航（多路径进入）
+
+不一定从 0 开始。根据你的当前状态选择入口点：
+
+| 你的状态 | 命令 |
+|---------|------|
+| 有新需求文档 | `--gate1 --prd` |
+| 已有 Plan，要实现 | `--gate2 --impl` |
+| 有 Bug 要修 | `--gate2 --debug` 或 `--gate1 --bug` |
+| PRD 有变更 | `--prd-changed --impact X` |
+| 上次会话中断 | `resume` |
+| 想复盘质量 | `--self` |
+
+> 完整入口点和跳转规则 → [references/lifecycle-graph.md](references/lifecycle-graph.md)
 
 ---
 
@@ -236,6 +253,8 @@ P1 → P1.5(DB) → P1.6(代码链路) → P1.7(PM 顾问) → P2 → P2.5(架�
 | PRD 变更 | `references/prd-revision-workflow.md` + `references/plan-tweak-workflow.md` | `--prd-changed` 时 |
 | Plan 微调 | `references/plan-tweak-workflow.md` | `--plan-tweak` 时 |
 | Unit 完成后 | `references/knowledge-compounding.md` | evolve 检查时 |
+| 引擎交互 | `references/engine-interaction.md` | 任何 enter/complete 时 |
+| 多路径生命周期 | `references/lifecycle-graph.md` | 入口点导航/跳转时 |
 
 ## 参考文件索引
 

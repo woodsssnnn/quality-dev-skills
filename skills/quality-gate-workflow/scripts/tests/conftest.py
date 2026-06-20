@@ -28,6 +28,7 @@ GATE1_STEPS = gate_enforcer.GATE1_STEPS
 GATE2_STEPS = gate_enforcer.GATE2_STEPS
 DEBUG_STEPS = gate_enforcer.DEBUG_STEPS
 AUDIT_STEPS = gate_enforcer.AUDIT_STEPS
+AUTO_COMPLETE_STEPS = gate_enforcer.AUTO_COMPLETE_STEPS
 NOT_STARTED = gate_enforcer.NOT_STARTED
 RUNNING = gate_enforcer.RUNNING
 COMPLETED = gate_enforcer.COMPLETED

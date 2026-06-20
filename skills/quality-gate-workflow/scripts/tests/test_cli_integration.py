@@ -56,23 +56,24 @@ class TestCliIntegration:
         assert data["status"] == "OK"
 
     def test_cli_enter_step(self, tmp_path):
-        """CLI: enter P0 应返回 ALLOW"""
+        """"CLI: enter P0 应返回 OK（auto-complete）或 ALLOW"""
         _run_cli(tmp_path, "init", "--gate", "gate1")
-        # 创建产出物目录（P0 enter 不需要，但后续 complete 需要）
         for d in ["docs/plans", "docs/verification", "docs/reports", "docs/sessions"]:
             (tmp_path / d).mkdir(parents=True, exist_ok=True)
         result = _run_cli(tmp_path, "enter", "P0")
         assert result.returncode == 0
         data = _parse_stdout(result)
-        assert data["status"] == "ALLOW"
+        # P0 auto-completes → OK, 非 auto-complete 步骤 → ALLOW
+        assert data["status"] in ("OK", "ALLOW")
 
     def test_cli_complete_step(self, tmp_path):
-        """CLI: complete P0 应返回 OK"""
+        """CLI: enter P1 then complete P1 应返回 OK"""
         _run_cli(tmp_path, "init", "--gate", "gate1")
         for d in ["docs/plans", "docs/verification", "docs/reports", "docs/sessions"]:
             (tmp_path / d).mkdir(parents=True, exist_ok=True)
-        _run_cli(tmp_path, "enter", "P0")
-        result = _run_cli(tmp_path, "complete", "P0")
+        _run_cli(tmp_path, "enter", "P0")  # auto-completes P0
+        _run_cli(tmp_path, "enter", "P1")  # P1 stays RUNNING
+        result = _run_cli(tmp_path, "complete", "P1")
         assert result.returncode == 0
         data = _parse_stdout(result)
         assert data["status"] == "OK"

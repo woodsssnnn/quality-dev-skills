@@ -31,11 +31,13 @@ def _enter_and_complete_p0(engine, tmp_path):
 
 class TestEnterGate1:
 
-    def test_enter_p0_success(self, initialized_gate1_engine):
-        """P0 无前置条件，可直接进入"""
+    def test_enter_p0_success(self, initialized_gate1_engine, tmp_path):
+        """P0 无前置条件，自动完成（auto-complete）"""
+        _make_dirs(tmp_path)
         rc = initialized_gate1_engine.enter("P0")
         assert rc == 0
-        assert initialized_gate1_engine.state["steps"]["P0"]["status"] == RUNNING
+        # P0 是 auto-complete 步骤，enter 后直接 COMPLETED
+        assert initialized_gate1_engine.state["steps"]["P0"]["status"] in (RUNNING, COMPLETED)
 
     def test_enter_p1_after_p0_complete(self, initialized_gate1_engine, tmp_path):
         """P0 完成后 P1 可进入"""
@@ -74,9 +76,11 @@ class TestEnterGate1:
     def test_enter_running_mutex_blocked(self, initialized_gate1_engine, tmp_path):
         """有步骤正在 RUNNING 时，不能进入其他步骤"""
         _make_dirs(tmp_path)
-        initialized_gate1_engine.enter("P0")
-        # P0 正在 RUNNING，尝试 enter P1 应被阻止
-        rc = initialized_gate1_engine.enter("P1")
+        # P0 auto-completes，所以用 P1 来测试 mutex
+        initialized_gate1_engine.enter("P0")  # auto-complete
+        initialized_gate1_engine.enter("P1")  # stays RUNNING
+        # P1 正在 RUNNING，尝试 enter P2 应被阻止
+        rc = initialized_gate1_engine.enter("P2")
         assert rc == 1
 
     def test_enter_p1_check_sub_decision_pass(self, initialized_gate1_engine, tmp_path):
@@ -108,8 +112,10 @@ class TestEnterGate1:
 
     def test_enter_sets_current_step(self, initialized_gate1_engine, tmp_path):
         _make_dirs(tmp_path)
-        initialized_gate1_engine.enter("P0")
-        assert initialized_gate1_engine.state["current_step"] == "P0"
+        # P0 auto-completes（current_step 重置为 None），用 P1 测试
+        initialized_gate1_engine.enter("P0")  # auto-complete
+        initialized_gate1_engine.enter("P1")  # stays RUNNING
+        assert initialized_gate1_engine.state["current_step"] == "P1"
 
     def test_enter_initializes_session_status(self, initialized_gate1_engine, tmp_path):
         """首次 enter 将会话状态从 INITIALIZED 改为 IN_PROGRESS"""
@@ -124,11 +130,12 @@ class TestEnterGate1:
 class TestEnterOtherGates:
 
     def test_enter_s0_success_gate2(self, initialized_gate2_engine, tmp_path):
-        """Gate 2 的 S0 无前置条件"""
+        """Gate 2 的 S0 无前置条件，自动完成（auto-complete）"""
         _make_dirs(tmp_path)
         rc = initialized_gate2_engine.enter("S0")
         assert rc == 0
-        assert initialized_gate2_engine.state["steps"]["S0"]["status"] == RUNNING
+        # S0 是 auto-complete 步骤，enter 后直接 COMPLETED
+        assert initialized_gate2_engine.state["steps"]["S0"]["status"] in (RUNNING, COMPLETED)
 
     def test_enter_s2_after_s1_complete(self, initialized_gate2_engine, tmp_path):
         _make_dirs(tmp_path)

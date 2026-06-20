@@ -2,6 +2,15 @@
 
 All notable changes to db-migration-gate will be documented in this file.
 
+## [0.8.2.0] - 2026-06-20
+
+### Added
+- pytest 测试套件：13 用例（文件名 3 + DROP 操作 3 + down 脚本 2 + TRUNCATE 2 + 边缘场景 3）
+- Eval 场景新增：scenario-4（空迁移目录）和 scenario-5（多重危险操作混合）
+- `pytest.ini` + `tests/conftest.py` 测试基础设施
+
+---
+
 ## [0.8.0.1] - 2026-06-19
 
 ### Changed

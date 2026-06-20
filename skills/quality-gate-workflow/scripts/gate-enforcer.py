@@ -53,10 +53,16 @@ VALID_SESSION_STATUSES = {"INITIALIZED", "IN_PROGRESS", "PAUSED", "COMPLETED", "
 
 # ===== 步骤定义 =====
 
-GATE1_STEPS = ["P0", "P1", "P1.5", "P1.6", "P1.7", "P1-check", "P2", "P2.5", "P3", "P4", "P5"]
-GATE2_STEPS = ["S0", "S1", "S2", "S2.5", "S3", "S3.5", "S4", "S4.5", "S5"]
+GATE1_STEPS = ["P0", "P1", "P1.5", "P1.6", "P1.7", "P1-check", "P2", "P2.5", "P3", "P4", "P5", "P5-evolve"]
+GATE2_STEPS = ["S0", "S1", "S2", "S2.5", "S3", "S3.5", "S4", "S4.5", "S5", "S5-evolve"]
 DEBUG_STEPS = ["D1", "D2", "D3", "D4"]
 AUDIT_STEPS = ["A", "B", "C", "D", "E"]
+
+# ===== 优先级排序 =====
+PRIORITY_ORDER = {"P0": 0, "P1": 1, "P2": 2}
+
+# ===== 自动完成步骤（纯机械操作，enter 时自动 complete） =====
+AUTO_COMPLETE_STEPS = {"P0", "S0", "P1-check"}
 
 # ===== Guard 转换规则 =====
 # requires: {前置步骤: 必须状态}
@@ -84,6 +90,7 @@ TRANSITION_GUARDS = {
     "P5":       {"requires": {"P4": COMPLETED},
                  "artifact_checks": ["verification_json_valid", "index_updated", "session_summary",
                                      "schema_valid"]},
+    "P5-evolve": {"requires": {"P5": COMPLETED}, "skippable": True},
 
     # Gate 2
     "S0":       {"requires": {}, "artifact_checks": ["dirs_exist"]},
@@ -101,6 +108,7 @@ TRANSITION_GUARDS = {
     "S5":       {"requires": {"S4": COMPLETED},
                  "artifact_checks": ["toolcallid_complete", "coderefs_present", "plan_updated",
                                      "feedback_rounds", "schema_valid"]},
+    "S5-evolve": {"requires": {"S5": COMPLETED}, "skippable": True},
 
     # Debug
     "D1":       {"requires": {}, "artifact_checks": ["fix_criteria_documented"]},
@@ -656,6 +664,72 @@ class GateEngine:
         except ValueError:
             return 0
 
+    # ===== 优先级排序 =====
+
+    def _sort_units_by_priority(self, verification_dir):
+        """读取 verification dir 中的 unit-*.json，返回按优先级排序的 Unit 列表。
+
+        Returns:
+            list[dict]: 排序后的 units，每个 dict 含 name, priority, items
+        """
+        ver_path = Path(verification_dir)
+        if not ver_path.is_dir():
+            return []
+
+        all_units = []
+        for jf in sorted(ver_path.glob("unit-*.json")):
+            try:
+                with open(jf, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                continue
+            for unit in data.get("units", []):
+                # 无 priority 字段默认 P1
+                unit.setdefault("priority", "P1")
+                # Item 级继承 Unit 级 priority
+                for item in unit.get("items", []):
+                    item.setdefault("priority", unit["priority"])
+                all_units.append(unit)
+
+        # 稳定排序：按 PRIORITY_ORDER 升序
+        all_units.sort(key=lambda u: PRIORITY_ORDER.get(u.get("priority", "P1"), 1))
+        return all_units
+
+    # ===== Bug 阻塞检查 =====
+
+    def _check_bug_block(self, step, verification_dir):
+        """检查 P0 优先级是否有未修复的 FAIL，如果是则阻塞低优先级步骤。
+
+        Returns:
+            (blocked: bool, reason: str)
+        """
+        # S0/S5 和 Gate 1 步骤不受 bug 阻塞影响
+        if step in ("S0", "S5", "P0", "P1", "P1.5", "P1.6", "P1.7", "P1-check"):
+            return False, ""
+
+        ver_path = Path(verification_dir)
+        if not ver_path.is_dir():
+            return False, ""
+
+        # 读取所有 P0 的 FAIL items
+        p0_fail_items = []
+        for jf in sorted(ver_path.glob("unit-*.json")):
+            try:
+                with open(jf, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                continue
+            for unit in data.get("units", []):
+                if unit.get("priority", "P1") == "P0":
+                    for item in unit.get("items", []):
+                        if item.get("status") == "FAIL":
+                            p0_fail_items.append(item.get("id", "unknown"))
+
+        if p0_fail_items:
+            return True, f"P0 优先级存在未修复的 FAIL: {', '.join(p0_fail_items)}，低优先级步骤暂停"
+
+        return False, ""
+
     # ===== .gate-state 兼容写入 =====
 
     def _update_gate_state(self):
@@ -819,6 +893,14 @@ class GateEngine:
         session_id = generate_session_id()
         skip_matrix = self._build_skip_matrix(gate, mode, flags)
 
+        # 解析 --priority 过滤参数
+        priority_filter = None
+        if flags:
+            for i, f in enumerate(flags):
+                if f == "--priority" and i + 1 < len(flags):
+                    priority_filter = [flags[i + 1]]
+                    break
+
         self.state = {
             "schema_version": SCHEMA_VERSION,
             "session_id": session_id,
@@ -831,6 +913,7 @@ class GateEngine:
             "skip_matrix": skip_matrix,
             "feedback_rounds": 0,
             "max_feedback_rounds": 2,
+            "priority_filter": priority_filter,
             "created_at": now_iso(),
         }
 
@@ -924,6 +1007,48 @@ class GateEngine:
         self.state["current_step"] = step
         if self.state["status"] == "INITIALIZED":
             self.state["status"] = "IN_PROGRESS"
+
+        # 自动完成机制：纯机械步骤自动 enter → guard check → complete
+        if step in AUTO_COMPLETE_STEPS:
+            # 运行 artifact checks
+            for check_name in guard.get("artifact_checks", []):
+                checker = ARTIFACT_CHECKERS.get(check_name)
+                if checker:
+                    ok, msg = checker(self.state)
+                    if not ok:
+                        # artifact check 失败 → 回滚到 NOT_STARTED 并 BLOCK
+                        step_state["status"] = NOT_STARTED
+                        step_state["started_at"] = None
+                        self.state["current_step"] = None
+                        self._save_state()
+                        return output_block(
+                            f"自动完成失败 [{check_name}]: {msg}",
+                            step=step
+                        )
+
+            # 所有检查通过 → 自动 complete
+            step_state["status"] = COMPLETED
+            step_state["completed_at"] = now_iso()
+            step_state["meta"]["auto_completed"] = True
+
+            # 写 checkpoint
+            self._write_checkpoint(step, step_state)
+            self._update_gate_state()
+
+            # 计算下一步
+            self.state["current_step"] = None
+            next_step = self._next_step(step)
+            if next_step == "SESSION_COMPLETE":
+                self.state["status"] = "COMPLETED"
+            self._save_state()
+
+            return output_ok(
+                f"{step} 自动完成（纯机械步骤）。下一步: {next_step}",
+                step=step,
+                auto_completed=True,
+                next_step=next_step,
+            )
+
         self._save_state()
 
         return output_allow(step, f"进入 {step}，前置条件已满足")
@@ -993,6 +1118,35 @@ class GateEngine:
             step_state["meta"]["toolCallId"] = tool_call_id
         if meta:
             step_state["meta"].update(meta)
+
+        # 报告自动生成（非阻断，失败只记录警告）
+        try:
+            from report_generator import maybe_generate_report
+            report_path = maybe_generate_report(step, self.state)
+            if report_path:
+                step_state["meta"]["generated_report"] = report_path
+        except ImportError:
+            pass  # report-generator 不可用时静默降级
+        except Exception as e:
+            import sys as _sys
+            print(f"[gate-enforcer] ⚠️ 报告生成失败: {e}", file=_sys.stderr)
+
+        # Knowledge Compounding 自动触发（P5/S5 complete 时）
+        if step in ("P5", "S5"):
+            try:
+                from evolve_engine import EvolveEngine
+                _evolve = EvolveEngine(".")
+                _gate = "gate1" if step == "P5" else "gate2"
+                _result = _evolve.evolve(_gate)
+                step_state["meta"]["evolve_result"] = {
+                    "new_patterns": _result.get("new_patterns", 0),
+                    "suggestions": _result.get("suggestions", []),
+                }
+            except ImportError:
+                pass  # evolve-engine 不可用时静默降级
+            except Exception as e:
+                import sys as _sys
+                print(f"[gate-enforcer] ⚠️ evolve 执行失败: {e}", file=_sys.stderr)
 
         # 写 checkpoint
         self._write_checkpoint(step, step_state)
@@ -1137,6 +1291,8 @@ class GateEngine:
             steps={s: st["status"] for s, st in steps.items()},
             skip_matrix=self.state.get("skip_matrix", {}),
             feedback_rounds=f"{self.state['feedback_rounds']}/{self.state['max_feedback_rounds']}",
+            priority_filter=self.state.get("priority_filter"),
+            progress_bar=self._render_progress_bar(),
         )
 
     # ===== RESUME =====
@@ -1337,6 +1493,18 @@ class GateEngine:
 
         self._save_state()
 
+        # PRD Impact Report 自动生成（非阻断）
+        try:
+            from report_generator import generate_report as _gen_report
+            _report_path = _gen_report("prd-impact", self.state)
+            if _report_path:
+                change_record["generated_report"] = _report_path
+        except ImportError:
+            pass
+        except Exception as e:
+            import sys as _sys
+            print(f"[gate-enforcer] ⚠️ PRD Impact Report 生成失败: {e}", file=_sys.stderr)
+
         return output_ok(
             " | ".join(summary_lines),
             impact=impact,
@@ -1404,6 +1572,14 @@ class GateEngine:
         }
         return mapping.get((step, prereq), "")
 
+    def _render_progress_bar(self):
+        """调用 progress-renderer 生成进度条文本"""
+        try:
+            from progress_renderer import render_progress
+            return render_progress(self.state)
+        except ImportError:
+            return ""  # progress-renderer 不可用时降级
+
 
 # ===== CLI 入口 =====
 
@@ -1425,6 +1601,8 @@ def main():
     p_init.add_argument("--strict", action="store_true", help="零偏差模式")
     p_init.add_argument("--incremental", action="store_true", help="增量验证")
     p_init.add_argument("--e2e", action="store_true", help="E2E 行为验证")
+    p_init.add_argument("--priority", default=None, choices=["P0", "P1", "P2"],
+                        help="优先级过滤（仅执行指定优先级的 Unit）")
 
     # enter
     p_enter = subparsers.add_parser("enter", help="请求进入某步骤（前置检查）")
@@ -1489,6 +1667,8 @@ def main():
             flags.append("--incremental")
         if args.e2e:
             flags.append("--e2e")
+        if args.priority:
+            flags.extend(["--priority", args.priority])
         rc = engine.init(args.gate, args.mode, flags)
 
     elif args.action == "enter":

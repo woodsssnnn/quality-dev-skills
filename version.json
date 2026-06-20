@@ -1,7 +1,7 @@
 {
   "template": {
     "name": "project-dev-rule-template",
-    "version": "0.8.0.1",
+    "version": "0.8.3.0",
     "description": "项目开发规范技能模板",
     "compatibility": {
       "min_project_version": "0.5.0.0",
@@ -10,27 +10,57 @@
   },
   "skills": {
     "quality-gate-workflow": {
-      "version": "0.8.0.1",
+      "version": "0.8.3.0",
       "description": "质量门禁工作流"
     },
     "skill-optimizer": {
-      "version": "0.8.0.1",
+      "version": "0.8.3.0",
       "description": "技能自动优化框架"
     },
     "qgw-init": {
-      "version": "0.8.0.1",
+      "version": "0.8.3.0",
       "description": "项目初始化引导技能"
     },
     "api-design-review": {
-      "version": "0.8.0.1",
+      "version": "0.8.3.0",
       "description": "API 设计审查门禁"
     },
     "db-migration-gate": {
-      "version": "0.8.0.1",
+      "version": "0.8.3.0",
       "description": "数据库迁移质量门禁"
     }
   },
   "changelog": [
+    {
+      "version": "0.8.3.0",
+      "date": "2026-06-20",
+      "changes": [
+        "P0: Plan 优先级分级（P0/P1/P2）+ Bug 阻塞传播 + Schema v1.3",
+        "P0: Knowledge Compounding 闭环（evolve-engine.py + P5-evolve/S5-evolve 步骤）",
+        "P0: 引擎交互降噪（auto-complete P0/S0/P1-check + progress-renderer 进度条）",
+        "P1: 网状生命周期（10 入口点 + 9 跳转规则 + lifecycle-graph.md）",
+        "P2: SKILL.md 入口点导航 + smart-inference 增强",
+        "P2: engine-interaction.md 统一引擎交互协议",
+        "测试总数: 189 → 210（+21：priority 10 + bug-block 9 + auto-complete 7 + progress 6 + evolve 12 + evolve-integration 7 = 51 新增，部分旧测试调整）"
+      ]
+    },
+    {
+      "version": "0.8.2.0",
+      "date": "2026-06-20",
+      "changes": [
+        "P0: 新建 report-generator.py — 6 种报告自动生成（plan-completeness/gate1-verifier/audit/debug-fix/session-summary/prd-impact）",
+        "P0: gate-enforcer.py 集成报告钩子（complete/prd-changed 时自动生成报告，warn-only 不阻断）",
+        "P1: 新建 api-design-review pytest 测试套件（17 用例，覆盖 URL 命名/HTTP 方法/响应码/分页/边缘场景）",
+        "P1: 新建 db-migration-gate pytest 测试套件（13 用例，覆盖文件名/DROP/down 脚本/TRUNCATE/DDL+DML 混合）",
+        "P2: Eval 场景补全：qgw-init 3 个、api-design-review 2 个、db-migration-gate 2 个、quality-gate-workflow 2 个（共 9 个新场景）",
+        "P2: 新增 prd-changed / plan-tweak eval 场景覆盖新功能",
+        "P3: 平台适配增强：claude-code/codex/minocode 版本号同步 0.6.0.0→0.8.2.0",
+        "P3: general/AGENTS.md 增强：完整 5 技能清单 + 参数矩阵 + 工作模式 + 强度级别",
+        "P3: 新增 platforms/qoder/ 平台适配（plugin.json + AGENTS.md）",
+        "P3: skill-manifest.json platforms 字段追加 qoder",
+        "测试总数: 115 → 189（+74：report-generator 38 + gate-enforcer 钩子 6 + api 17 + migration 13）"
+      ]
+    },
     {
       "version": "0.8.0.1",
       "date": "2026-06-19",

@@ -2,6 +2,15 @@
 
 All notable changes to api-design-review will be documented in this file.
 
+## [0.8.2.0] - 2026-06-20
+
+### Added
+- pytest 测试套件：17 用例（URL 命名 5 + HTTP 方法 3 + 响应码 4 + 分页 2 + 边缘场景 3）
+- Eval 场景新增：scenario-4（空 OpenAPI spec）和 scenario-5（多类型混合违规）
+- `pytest.ini` + `tests/conftest.py` 测试基础设施
+
+---
+
 ## [0.8.0.1] - 2026-06-19
 
 ### Changed

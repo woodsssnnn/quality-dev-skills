@@ -17,9 +17,16 @@ def _make_dirs(tmp_path):
 
 
 def _setup_p0(engine, tmp_path):
-    """进入 P0"""
+    """进入并自动完成 P0（auto-complete 步骤）"""
     _make_dirs(tmp_path)
-    engine.enter("P0")
+    engine.enter("P0")  # auto-completes P0
+
+
+def _setup_p1(engine, tmp_path):
+    """完成 P0 后进入 P1（非 auto-complete 步骤）"""
+    _make_dirs(tmp_path)
+    engine.enter("P0")  # auto-completes P0
+    engine.enter("P1")  # stays RUNNING
 
 
 # ── 基本 complete 测试 ────────────────────────────────────────────────────────
@@ -27,27 +34,25 @@ def _setup_p0(engine, tmp_path):
 class TestCompleteBasic:
 
     def test_complete_p0_success(self, initialized_gate1_engine, tmp_path):
-        """P0 complete 需通过 dirs_exist 检查"""
+        """P0 已 auto-complete，验证状态为 COMPLETED"""
         _setup_p0(initialized_gate1_engine, tmp_path)
-        rc = initialized_gate1_engine.complete("P0")
-        assert rc == 0
         assert initialized_gate1_engine.state["steps"]["P0"]["status"] == COMPLETED
 
     def test_complete_with_artifacts(self, initialized_gate1_engine, tmp_path):
-        """传入真实存在的文件作为 artifacts"""
-        _setup_p0(initialized_gate1_engine, tmp_path)
+        """P1 complete 传入真实存在的文件作为 artifacts"""
+        _setup_p1(initialized_gate1_engine, tmp_path)
         artifact = tmp_path / "docs" / "plans" / "plan.md"
         artifact.write_text("# Plan", encoding="utf-8")
         rc = initialized_gate1_engine.complete(
-            "P0", artifacts=[str(artifact.relative_to(tmp_path))]
+            "P1", artifacts=[str(artifact.relative_to(tmp_path))]
         )
         assert rc == 0
-        assert str(artifact.relative_to(tmp_path)) in initialized_gate1_engine.state["steps"]["P0"]["artifacts"]
+        assert str(artifact.relative_to(tmp_path)) in initialized_gate1_engine.state["steps"]["P1"]["artifacts"]
 
     def test_complete_artifact_not_exist_blocked(self, initialized_gate1_engine, tmp_path):
         """artifacts 中的路径不存在时应被阻止"""
-        _setup_p0(initialized_gate1_engine, tmp_path)
-        rc = initialized_gate1_engine.complete("P0", artifacts=["docs/nonexistent.md"])
+        _setup_p1(initialized_gate1_engine, tmp_path)
+        rc = initialized_gate1_engine.complete("P1", artifacts=["docs/nonexistent.md"])
         assert rc == 1
 
     def test_complete_not_running_blocked(self, initialized_gate1_engine, tmp_path):
@@ -58,22 +63,20 @@ class TestCompleteBasic:
     def test_complete_writes_checkpoint(self, initialized_gate1_engine, tmp_path):
         """complete 后应在 CHECKPOINT_DIR 写入 checkpoint 文件"""
         _setup_p0(initialized_gate1_engine, tmp_path)
-        initialized_gate1_engine.complete("P0")
+        # P0 auto-complete 时已写 checkpoint
         cp_path = tmp_path / "docs" / ".qgw-checkpoints" / "P0.json"
         assert cp_path.exists()
 
     def test_complete_updates_gate_state(self, initialized_gate1_engine, tmp_path):
         """complete 后 .gate-state 文件应被更新"""
         _setup_p0(initialized_gate1_engine, tmp_path)
-        initialized_gate1_engine.complete("P0")
         gs_path = tmp_path / "docs" / ".gate-state"
         assert gs_path.exists()
 
     def test_complete_next_step_calculated(self, initialized_gate1_engine, tmp_path):
         """complete 后应计算 next_step"""
-        _setup_p0(initialized_gate1_engine, tmp_path)
-        # P0 完成，需要捕获 stdout 来检查 next_step（或检查 state）
-        rc = initialized_gate1_engine.complete("P0")
+        _setup_p1(initialized_gate1_engine, tmp_path)
+        rc = initialized_gate1_engine.complete("P1")
         assert rc == 0
         # 完成后 current_step 应为 None
         assert initialized_gate1_engine.state["current_step"] is None
@@ -144,3 +147,39 @@ class TestCompleteContentDrivenSkip:
         engine_instance.enter("P1")
         engine_instance.complete("P1", meta={"has_backend": False})
         assert engine_instance.state["steps"]["P1.5"]["status"] == SKIPPED
+
+
+# ── 报告生成钩子测试 ─────────────────────────────────────────────────────────
+
+class TestCompleteReportHook:
+
+    def test_complete_p0_no_report_generated(self, engine_instance, tmp_path):
+        """P0 不在 REPORT_STEP_MAP 中，不触发报告生成"""
+        engine_instance.init("gate1", "prd", [])
+        _make_dirs(tmp_path)
+        engine_instance.enter("P0")  # auto-completes
+        # P0 不在映射中，meta 中不应有 generated_report
+        assert "generated_report" not in engine_instance.state["steps"]["P0"]["meta"]
+
+    def test_complete_generates_report_for_mapped_step(self, engine_instance, tmp_path):
+        """complete 一个映射步骤时生成报告文件"""
+        engine_instance.init("debug", "debug", [])
+        _make_dirs(tmp_path)
+        # 推进到 D3（debug-fix 报告）
+        for step in ["D1", "D2"]:
+            engine_instance.enter(step)
+            engine_instance.complete(step)
+        engine_instance.enter("D3")
+        engine_instance.complete("D3")
+        meta = engine_instance.state["steps"]["D3"]["meta"]
+        # D3 在 REPORT_STEP_MAP 中，应生成报告
+        assert "generated_report" in meta
+        assert os.path.exists(meta["generated_report"])
+
+    def test_complete_report_hook_non_blocking(self, engine_instance, tmp_path):
+        """报告生成失败不应阻断步骤完成"""
+        engine_instance.init("gate1", "prd", [])
+        _make_dirs(tmp_path)
+        engine_instance.enter("P0")  # auto-completes P0
+        # 即使报告钩子有问题，P0 仍应成功（auto-complete）
+        assert engine_instance.state["steps"]["P0"]["status"] == COMPLETED

@@ -2,6 +2,33 @@
 
 All notable changes to quality-gate-workflow will be documented in this file.
 
+## [0.8.3.0] - 2026-06-20
+
+### Added - 网状生命周期 + 优先级分级 + 引擎降噪 + 知识闭环
+- **Plan 优先级分级**：Unit/Item P0/P1/P2 优先级，Schema v1.3，`--priority` 过滤参数
+- **Bug 阻塞传播**：P0 item FAIL 时自动暂停低优先级步骤
+- **auto-complete 机制**：P0/S0/P1-check 纯机械步骤自动完成，减少 CLI 交互
+- **progress-renderer.py**：文本进度条可视化，嵌入 status 输出
+- **evolve-engine.py**：Knowledge Compounding 闭环引擎，模式提取 + 频率统计 + 阈值升级
+- **P5-evolve / S5-evolve 步骤**：正式加入 GATE1/GATE2_STEPS，P5/S5 complete 时自动触发
+- **网状生命周期**：10 入口点 + 9 跳转规则，lifecycle-graph.md 文档化
+- **engine-interaction.md**：统一引擎交互协议，抽离 workflow 文档中的重复引擎指令
+- **SKILL.md 入口点导航**：多路径进入指引 + smart-inference 增强
+- 测试总数：189 → 210（新增 51：priority 10 + bug-block 9 + auto-complete 7 + progress 6 + evolve 12 + evolve-integration 7）
+
+---
+
+## [0.8.2.0] - 2026-06-20
+
+### Added - Reports 自动生成 + Eval 覆盖 + 平台增强
+- **report-generator.py**：新建报告自动生成器，6 种报告类型（plan-completeness / gate1-verifier / audit / debug-fix / session-summary / prd-impact）
+- **gate-enforcer.py 报告钩子**：`complete()` 和 `prd_changed()` 自动触发报告生成，warn-only 不阻断流程
+- **pytest 测试套件**：新增 44 用例（report-generator 38 + gate-enforcer 钩子 6）
+- **Eval 场景**：新增 scenario-6（prd-changed 三级）和 scenario-7（plan-tweak 约束）
+- **平台适配**：新增 platforms/qoder/，general/AGENTS.md 增强为完整技能清单 + 参数矩阵
+
+---
+
 ## [0.8.0.1] - 2026-06-19
 
 ### Fixed

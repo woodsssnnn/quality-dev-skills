@@ -7,7 +7,7 @@
   "properties": {
     "version": {
       "type": "string",
-      "const": "1.2"
+      "const": "1.3"
     },
     "plan": {
       "type": "string",
@@ -37,6 +37,12 @@
         "required": ["name", "items"],
         "properties": {
           "name": { "type": "string" },
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2"],
+            "default": "P1",
+            "description": "Unit 优先级。P0=核心链路(阻塞下游), P1=标准功能, P2=锦上添花"
+          },
           "chapter": {
             "type": "string",
             "description": "PRD 章节目录名，如 ch-2.1-user-registration"
@@ -111,6 +117,11 @@
                   "type": "array",
                   "items": { "type": "string" },
                   "description": "关联的 PRD 资产路径（图片/表格/附件），如 images/ui-register.png"
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": ["P0", "P1", "P2"],
+                  "description": "Item 级优先级覆盖。未指定时继承 Unit 级 priority"
                 }
               }
             }

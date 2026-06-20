@@ -34,6 +34,10 @@
 │   └─ 无 Plan → --gate1 --bug
 ├─ 含 Plan 文件路径 → --gate2 --impl
 ├─ 含重构/优化意图 → --gate1 --opt
+├─ 含“PRD 改了”“需求变了” → --prd-changed + 推断 impact
+├─ 含“上次做到一半”“继续” → resume
+├─ 含“学到了”“反模式” → evolve（自动触发，无需显式参数）
+├─ 含“Plan 有问题” → 建议重新 gate1
 ├─ 有活跃 session → 提示 resume
 ├─ 含审计/检查意图 → --gate2 --audit
 └─ 无法匹配 → 展示 first-run-guide

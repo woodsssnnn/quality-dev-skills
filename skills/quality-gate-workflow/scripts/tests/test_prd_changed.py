@@ -88,3 +88,35 @@ class TestPrdChanged:
         engine_instance.init("gate2", "prd", [])
         rc = engine_instance.prd_changed("catastrophic")
         assert rc == 1
+
+
+# ── PRD Impact Report 生成测试 ────────────────────────────────────────────────
+
+class TestPrdChangedReportGeneration:
+
+    def test_prd_changed_generates_impact_report(self, engine_instance, tmp_path):
+        """prd_changed 执行后应生成 PRD Impact Report"""
+        _setup_active_gate2(engine_instance, tmp_path)
+        engine_instance.prd_changed("minor", scope="§2.3")
+        # 检查 prd_change 记录中是否有 generated_report
+        changes = engine_instance.state.get("prd_change", [])
+        assert len(changes) > 0
+        assert "generated_report" in changes[-1]
+        assert os.path.exists(changes[-1]["generated_report"])
+
+    def test_prd_changed_cosmetic_generates_report(self, engine_instance, tmp_path):
+        """cosmetic 级别也应生成 PRD Impact Report"""
+        _setup_active_gate2(engine_instance, tmp_path)
+        engine_instance.prd_changed("cosmetic")
+        changes = engine_instance.state.get("prd_change", [])
+        assert len(changes) > 0
+        assert "generated_report" in changes[-1]
+
+    def test_prd_changed_no_active_session_no_report(self, engine_instance, tmp_path):
+        """无活跃 Gate 2 会话时，不写入 prd_change 记录，但仍尝试生成报告"""
+        engine_instance.init("gate1", "prd", [])
+        _make_dirs(tmp_path)
+        rc = engine_instance.prd_changed("minor")
+        assert rc == 0
+        # 无活跃 gate2，不写 prd_change 记录
+        assert "prd_change" not in engine_instance.state or engine_instance.state.get("prd_change") is None
