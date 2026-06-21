@@ -5,6 +5,20 @@ $repo = Split-Path -Parent $PSScriptRoot
 $enforcer = "$repo\skills\quality-gate-workflow\scripts\gate-enforcer.py"
 $tmp = Join-Path $env:TEMP "qgw-smoke-$(Get-Random)"
 
+# Python 检测（兼容 python3 / python / py）
+$py = $null
+foreach ($c in @("python3", "python", "py")) {
+    $cmd = Get-Command $c -ErrorAction SilentlyContinue
+    if ($cmd) {
+        $ver = & $cmd -c "import sys; print(sys.version_info[0])" 2>$null
+        if ($ver -eq "3") { $py = $cmd.Source; break }
+    }
+}
+if (-not $py) {
+    Write-Host "ERROR: Python 3 not found (python3/python/py)" -ForegroundColor Red
+    exit 1
+}
+
 # Setup
 New-Item -ItemType Directory "$tmp\docs\plans" -Force | Out-Null
 New-Item -ItemType Directory "$tmp\docs\verification" -Force | Out-Null
@@ -28,47 +42,47 @@ function Check($name, $result) {
 Write-Host "=== CLI Smoke Test ==="
 
 # 1. init gate2
-$r = python $enforcer init --gate gate2 --mode impl 2>&1
+$r = & $py $enforcer init --gate gate2 --mode impl 2>&1
 Check "init gate2" $r
 
 # 2. enter S0
-$r = python $enforcer enter S0 2>&1
+$r = & $py $enforcer enter S0 2>&1
 Check "enter S0" $r
 
 # 3. complete S0
-$r = python $enforcer complete S0 2>&1
+$r = & $py $enforcer complete S0 2>&1
 Check "complete S0" $r
 
 # 4. enter S1
-$r = python $enforcer enter S1 2>&1
+$r = & $py $enforcer enter S1 2>&1
 Check "enter S1" $r
 
 # 5. complete S1
-$r = python $enforcer complete S1 2>&1
+$r = & $py $enforcer complete S1 2>&1
 Check "complete S1" $r
 
 # 6. prd-changed cosmetic (no step reset)
-$r = python $enforcer prd-changed --impact cosmetic --scope "§2.3" 2>&1
+$r = & $py $enforcer prd-changed --impact cosmetic --scope "§2.3" 2>&1
 Check "prd-changed cosmetic" $r
 
 # 7. plan-tweak
-$r = python $enforcer plan-tweak --reason "字段名修正" --scope "ch-2.3" 2>&1
+$r = & $py $enforcer plan-tweak --reason "字段名修正" --scope "ch-2.3" 2>&1
 Check "plan-tweak" $r
 
 # 8. prd-changed minor (should reset S4)
-$r = python $enforcer prd-changed --impact minor --scope "§3.1" 2>&1
+$r = & $py $enforcer prd-changed --impact minor --scope "§3.1" 2>&1
 Check "prd-changed minor" $r
 
 # 9. status
-$r = python $enforcer status 2>&1
+$r = & $py $enforcer status 2>&1
 Check "status" $r
 
 # 10. self-check
-$r = python $enforcer self-check 2>&1
+$r = & $py $enforcer self-check 2>&1
 Check "self-check" $r
 
 # 11. resume
-$r = python $enforcer resume 2>&1
+$r = & $py $enforcer resume 2>&1
 Check "resume" $r
 
 Pop-Location

@@ -14,6 +14,18 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Python 检测（与 verify-checkpoint.sh 一致）
+PYTHON=""
+for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+        local_ver=$(command "$candidate" -c "import sys; print(sys.version_info[0])" 2>/dev/null || echo "0")
+        if [ "$local_ver" = "3" ]; then
+            PYTHON="$candidate"
+            break
+        fi
+    fi
+done
+
 # 工作空间初始化模式
 if [ "$1" = "--init-workspace" ]; then
     echo "========================================="
@@ -373,7 +385,7 @@ echo "========================================="
 
 if [ "$FAIL" -gt 0 ]; then
     echo " ⚠ 有 $FAIL 项检查失败，请修复后再使用。"
-    echo " 运行 --init-workspace 可自动创建缺失的工作空间目录。"
+    echo " 自动修复: bash $SKILL_DIR/scripts/health-check.sh --init-workspace"
     exit 1
 else
     echo " 🎉 质量门禁已就绪。"

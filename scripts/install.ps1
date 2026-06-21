@@ -107,6 +107,67 @@ function New-SkillLink {
     }
 }
 
+# ===== Preflight 硬性检查 =====
+if (-not $Update) {
+    Write-Host "[preflight] 检查运行环境..." -ForegroundColor Cyan
+    Write-Host ""
+    $missing = 0
+
+    # 1. Python 3
+    $pyCmd = $null
+    foreach ($candidate in @("python3", "python", "py")) {
+        $resolved = Get-Command $candidate -ErrorAction SilentlyContinue
+        if ($resolved) {
+            $ver = & $resolved -c "import sys; print(sys.version_info[0])" 2>$null
+            if ($ver -eq "3") {
+                $pyCmd = $resolved.Source
+                break
+            }
+        }
+    }
+
+    if ($pyCmd) {
+        $pyVer = & $pyCmd --version 2>&1
+        Write-Host "  ✅ Python 3: $pyVer" -ForegroundColor Green
+    } else {
+        Write-Host "  ❌ Python 3 未找到" -ForegroundColor Red
+        Write-Host "     winget install Python.Python.3.12" -ForegroundColor Yellow
+        Write-Host "     或: https://www.python.org/downloads/" -ForegroundColor Yellow
+        Write-Host "     安装时勾选 'Add Python to PATH'" -ForegroundColor Yellow
+        $missing = 1
+    }
+
+    # 2. Git
+    $gitCmd = Get-Command git -ErrorAction SilentlyContinue
+    if ($gitCmd) {
+        $gitVer = & git --version 2>&1
+        Write-Host "  ✅ Git: $gitVer" -ForegroundColor Green
+    } else {
+        Write-Host "  ❌ Git 未找到" -ForegroundColor Red
+        Write-Host "     winget install Git.Git" -ForegroundColor Yellow
+        Write-Host "     或: https://git-scm.com/downloads" -ForegroundColor Yellow
+        $missing = 1
+    }
+
+    Write-Host ""
+
+    if ($missing -eq 1) {
+        Write-Host "=========================================" -ForegroundColor Red
+        Write-Host " ❌ 安装中止：请先安装以上缺失依赖" -ForegroundColor Red
+        Write-Host "=========================================" -ForegroundColor Red
+        Write-Host ""
+        Write-Host " Python 3 和 Git 是 QGW 的硬性运行依赖：" -ForegroundColor Yellow
+        Write-Host "   - Python 3: 确定性引擎、Hook 检查、报告生成" -ForegroundColor Gray
+        Write-Host "   - Git:      版本控制、Hook 机制、commitSha 记录" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host " 安装完成后重新运行本脚本即可。" -ForegroundColor Gray
+        exit 1
+    }
+
+    Write-Host "[preflight] ✅ 环境检查通过" -ForegroundColor Green
+    Write-Host ""
+}
+
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host " quality-dev-skills install (PowerShell)" -ForegroundColor Cyan
 Write-Host "  symlink=$CanSymlink  junction=$CanJunction  scope=global" -ForegroundColor DarkGray
@@ -206,4 +267,5 @@ if (-not $DryRun) {
 
 Write-Host ""
 Write-Host "Update: re-run install.ps1 after git pull" -ForegroundColor Gray
-Write-Host "Uninstall: bash scripts/uninstall.sh  (or remove dirs manually)" -ForegroundColor Gray
+Write-Host "Uninstall (bash):  bash scripts/uninstall.sh" -ForegroundColor Gray
+Write-Host "Uninstall (PowerShell): Remove-Item -Recurse -Force `"${env:USERPROFILE}\.agents\skills\*`"" -ForegroundColor Gray

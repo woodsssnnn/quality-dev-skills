@@ -24,6 +24,121 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
+# ===== Preflight 硬性检查 =====
+# 检测操作系统（用于输出平台对应的安装命令）
+detect_os() {
+  case "$(uname -s 2>/dev/null || echo unknown)" in
+    Linux*)   echo "linux" ;;
+    Darwin*)  echo "macos" ;;
+    MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
+    *)        echo "unknown" ;;
+  esac
+}
+
+preflight_check() {
+  local os
+  os=$(detect_os)
+  local missing=0
+
+  echo "[preflight] 检查运行环境..."
+  echo ""
+
+  # 1. Python 3
+  local python_cmd=""
+  if command -v python3 >/dev/null 2>&1; then
+    python_cmd="python3"
+  elif command -v python >/dev/null 2>&1; then
+    # 确认是 Python 3
+    local py_ver
+    py_ver=$(python -c "import sys; print(sys.version_info[0])" 2>/dev/null || echo "0")
+    if [ "$py_ver" = "3" ]; then
+      python_cmd="python"
+    fi
+  fi
+
+  if [ -n "$python_cmd" ]; then
+    echo "  ✅ Python 3: $($python_cmd --version 2>&1)"
+  else
+    echo "  ❌ Python 3 未找到"
+    case "$os" in
+      macos)
+        echo "     brew install python3"
+        echo "     或: https://www.python.org/downloads/"
+        ;;
+      linux)
+        echo "     Ubuntu/Debian:  sudo apt install python3"
+        echo "     Fedora/RHEL:    sudo dnf install python3"
+        echo "     Arch:           sudo pacman -S python"
+        ;;
+      windows)
+        echo "     winget install Python.Python.3.12"
+        echo "     或: https://www.python.org/downloads/"
+        echo "     安装时勾选 'Add Python to PATH'"
+        ;;
+      *)
+        echo "     https://www.python.org/downloads/"
+        ;;
+    esac
+    missing=1
+  fi
+
+  # 2. Git
+  if command -v git >/dev/null 2>&1; then
+    echo "  ✅ Git: $(git --version 2>&1)"
+  else
+    echo "  ❌ Git 未找到"
+    case "$os" in
+      macos)
+        echo "     brew install git"
+        echo "     或: xcode-select --install"
+        ;;
+      linux)
+        echo "     Ubuntu/Debian:  sudo apt install git"
+        echo "     Fedora/RHEL:    sudo dnf install git"
+        echo "     Arch:           sudo pacman -S git"
+        ;;
+      windows)
+        echo "     winget install Git.Git"
+        echo "     或: https://git-scm.com/downloads"
+        ;;
+      *)
+        echo "     https://git-scm.com/downloads"
+        ;;
+    esac
+    missing=1
+  fi
+
+  echo ""
+
+  if [ "$missing" -eq 1 ]; then
+    echo "========================================="
+    echo " ❌ 安装中止：请先安装以上缺失依赖"
+    echo "========================================="
+    echo ""
+    echo " Python 3 和 Git 是 QGW 的硬性运行依赖："
+    echo "   - Python 3: 确定性引擎、Hook 检查、报告生成"
+    echo "   - Git:      版本控制、Hook 机制、commitSha 记录"
+    echo ""
+    echo " 安装完成后重新运行本脚本即可。"
+    exit 1
+  fi
+
+  echo "[preflight] ✅ 环境检查通过"
+  echo ""
+}
+
+# --update 模式跳过 preflight（已安装过说明依赖已就绪）
+PREFLIGHT_SKIP=false
+for arg in "$@"; do
+  case "$arg" in
+    --update|-u) PREFLIGHT_SKIP=true ;;
+  esac
+done
+
+if [ "$PREFLIGHT_SKIP" = false ]; then
+  preflight_check
+fi
+
 echo "========================================="
 echo " quality-dev-skills install"
 echo "========================================="
@@ -77,7 +192,12 @@ fi
 
 # 执行链接（link.sh 负责在 ~/.agents/skills/ 下建立软链接）
 echo "[install] Linking..."
-bash "$REPO_DIR/scripts/link.sh" "${SKILLS[@]}" || true
+LINK_EXIT=0
+bash "$REPO_DIR/scripts/link.sh" "${SKILLS[@]}" || LINK_EXIT=$?
+if [ "$LINK_EXIT" -ne 0 ]; then
+  echo ""
+  echo "[install] ⚠️  链接步骤有错误（退出码 $LINK_EXIT），请检查上方输出"
+fi
 
 # --init 模式：额外执行工作区初始化和健康检查
 if [ "$INIT_MODE" = true ]; then

@@ -95,8 +95,7 @@ fi
 
 # 版本兼容性检查
 if [ -f "$(dirname "$0")/check-compatibility.sh" ]; then
-    bash "$(dirname "$0")/check-compatibility.sh" -t "$LATEST_VERSION" -p "$CURRENT_VERSION"
-    if [ $? -ne 0 ]; then
+    if ! bash "$(dirname "$0")/check-compatibility.sh" -t "$LATEST_VERSION" -p "$CURRENT_VERSION"; then
         echo "❌ 版本不兼容，无法更新"
         exit 1
     fi

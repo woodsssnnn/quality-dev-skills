@@ -3,6 +3,20 @@ param()
 $repo = Split-Path -Parent $PSScriptRoot
 $pass = 0; $fail = 0; $warn = 0
 
+# Python 检测（兼容 python3 / python / py）
+$py = $null
+foreach ($c in @("python3", "python", "py")) {
+    $cmd = Get-Command $c -ErrorAction SilentlyContinue
+    if ($cmd) {
+        $ver = & $cmd -c "import sys; print(sys.version_info[0])" 2>$null
+        if ($ver -eq "3") { $py = $cmd.Source; break }
+    }
+}
+if (-not $py) {
+    Write-Host "ERROR: Python 3 not found (python3/python/py)" -ForegroundColor Red
+    exit 1
+}
+
 function Pass($msg) { $script:pass++; Write-Host "  PASS $msg" -ForegroundColor Green }
 function Fail($msg) { $script:fail++; Write-Host "  FAIL $msg" -ForegroundColor Red }
 function Warn($msg) { $script:warn++; Write-Host "  WARN $msg" -ForegroundColor Yellow }
@@ -25,7 +39,7 @@ Write-Host "`n=== 2. Python 语法校验 ==="
 Get-ChildItem -Path $repo -Filter "*.py" -Recurse |
     Where-Object { $_.FullName -notmatch '__pycache__|\.pytest_cache' } |
     ForEach-Object {
-        $r = python -m py_compile $_.FullName 2>&1
+        $r = & $py -m py_compile $_.FullName 2>&1
         if ($LASTEXITCODE -eq 0) {
             Pass "$($_.FullName.Replace($repo + '\', ''))"
         } else {

@@ -16,6 +16,22 @@ set -euo pipefail
 
 AGENT_SKILLS_DIR="$HOME/.agents/skills"
 
+# --help 支持
+for arg in "$@"; do
+  case "$arg" in
+    --help|-h)
+      echo "uninstall.sh — 从 ~/.agents/skills/ 移除技能"
+      echo ""
+      echo "用法:"
+      echo "  bash scripts/uninstall.sh                  # 卸载全部"
+      echo "  bash scripts/uninstall.sh quality-gate-workflow   # 卸载单个"
+      echo ""
+      echo "兼容软链接安装（ln -s / Junction）和早期复制安装。"
+      exit 0
+      ;;
+  esac
+done
+
 remove_one() {
   local name="$1"
   local target="$AGENT_SKILLS_DIR/$name"

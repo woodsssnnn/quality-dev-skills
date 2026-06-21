@@ -15,6 +15,22 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SKILLS_SRC="$REPO_DIR/skills"
 AGENT_SKILLS_DIR="$HOME/.agents/skills"
 
+# --help 支持
+for arg in "$@"; do
+  case "$arg" in
+    --help|-h)
+      echo "link.sh — 建立软链接：source → ~/.agents/skills/<name>"
+      echo ""
+      echo "用法:"
+      echo "  bash scripts/link.sh <skill-name>   # 链接单个技能"
+      echo "  bash scripts/link.sh                # 链接 skills/ 下所有技能"
+      echo ""
+      echo "目标目录: $AGENT_SKILLS_DIR"
+      exit 0
+      ;;
+  esac
+done
+
 # 确保目标目录存在
 mkdir -p "$AGENT_SKILLS_DIR"
 
