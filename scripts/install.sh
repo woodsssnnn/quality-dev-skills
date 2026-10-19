@@ -166,6 +166,11 @@ for arg in "$@"; do
   esac
 done
 
+# --update：重建全部链接（幂等，语义与默认安装一致，见 Usage 说明）
+if [ "$UPDATE_MODE" = true ]; then
+  echo "[install] Update mode: re-link skills (idempotent)"
+fi
+
 TARGET="$HOME/.agents/skills"
 echo "[install] mode=global target=$TARGET"
 

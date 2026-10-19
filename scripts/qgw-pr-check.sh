@@ -139,6 +139,7 @@ done
 
 # Summary
 echo "========================================="
+echo "Score threshold: ${MIN_SCORE:-B}"
 if [ "$ERRORS" -gt 0 ]; then
     echo "PR check FAILED: $ERRORS error(s) found"
     exit 1

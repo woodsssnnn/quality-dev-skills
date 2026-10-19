@@ -60,6 +60,10 @@ if [ ! -d "$PROJECT_ROOT" ]; then
     exit 1
 fi
 
+if [ "$VERBOSE" = true ]; then
+    echo "[verbose] 项目根: $PROJECT_ROOT"
+fi
+
 SKILL_DIR="$PROJECT_ROOT/.agents/skills/project-dev-rule"
 TEMPLATE_DIR="$(dirname "$0")/../shared/project-dev-rule-template"
 

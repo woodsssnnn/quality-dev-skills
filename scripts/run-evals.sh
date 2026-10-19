@@ -82,7 +82,7 @@ if [ -n "$PY" ]; then
 
   # 创建临时工作目录
   TMPDIR=$(mktemp -d)
-  trap "rm -rf $TMPDIR" EXIT
+  trap 'rm -rf "$TMPDIR"' EXIT
   cd "$TMPDIR"
 
   # 创建必要的目录
