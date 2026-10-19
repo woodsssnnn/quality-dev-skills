@@ -280,3 +280,50 @@ bash skills/qgw-init/scripts/qgw-init.sh --platform opencode --force --yes
 ```
 
 使用 `--force` 覆盖已有平台配置。
+
+---
+
+## 6. ZCode
+
+**配置方式**: 插件市场安装（无项目级配置文件；hook 类能力写入 `.zcode/settings.json`）
+
+### 自动检测条件
+
+项目根目录存在 `.zcode/` 目录。
+
+### 安装（自包含构建，推荐）
+
+ZCode 安装插件时会把插件目录拷贝进缓存，插件内引用仓库内相对路径的声明
+在缓存副本中会失效，因此先构建自包含插件：
+
+```bash
+# 在本仓库根目录执行
+python scripts/build-zcode-plugin.py
+```
+
+产出 `dist/`（市场清单 + 技能插件 + governance 治理运行时插件），然后在
+ZCode 中执行：
+
+```
+/plugin marketplace add <仓库根目录>/dist
+```
+
+### 项目级治理装配（可选）
+
+如需把 governance 代码门禁 hooks 写入当前项目（而非全局插件方式）：
+
+```bash
+node <仓库>/governance/scripts/install-hooks.js    # 在目标项目根执行
+```
+
+详见 [governance/README.md](../../../governance/README.md)
+与 [platforms/zcode/AGENTS.md](../../../platforms/zcode/AGENTS.md)。
+
+### 能力说明
+
+| 能力 | 支持情况 |
+|------|----------|
+| 技能自动发现 | ✅（安装插件即全量发现） |
+| Lifecycle hooks | ✅（governance 插件提供 4 hook） |
+| 子智能体 | ✅（governance 插件提供 3 个中立模板） |
+| 配置覆盖 | `.qgw/` 三层覆盖机制（项目 > 领域包 > 内置） |
