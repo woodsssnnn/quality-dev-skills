@@ -1,15 +1,54 @@
 # quality-dev-skills
 
-[English](#) | [中文](README.md)
+English | [中文](README.md)
 
-Universal AI skills repository. Provides quality gate workflow, skill optimization framework, and project skill templates — reusable by any project.
+Universal AI skills repository — a **code-governance runtime**, process-level quality gate workflow, skill optimization framework, and an open domain-pack mechanism, reusable by any project. The repo stays neutral: zero domain-specific content.
+
+[Contributing](CONTRIBUTING.md) | [Code of Conduct](CODE_OF_CONDUCT.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+
+## Why
+
+The biggest trust problem in AI pair programming: **the agent claims it did the job right — how do you prove it?** This repo answers with two layers:
+
+- **governance runtime (invisible layer)** — active the moment it's installed, never invoked by hand. Every file write is checked against red-line rules (hardcoded secrets get blocked until fixed), local verification runs leave machine receipts, and repeatedly-made mistakes trigger real-time reminders. All you see is "the agent fixed itself".
+- **Skills (process layer)** — semi-automatic, triggered by natural intent ("run the quality gate"). Full requirements-to-code traceability: 1:1 PRD parsing → acceptance-criteria extraction → plan gate → independent verification → reports.
+
+| Without it | With it |
+|------------|---------|
+| Agent says "verified" (but never ran it) | Machine receipts cross-checking conclusion vs exit code — `--verify-last` exposes the lie |
+| Hardcoded passwords/keys land in the repo | Blocked at write time |
+| Editing a contract field silently breaks consumers | Auto-hint to grep all consumers first |
+| The same mistake repeats across sessions | Event stream tracks frequency; repeat violations get flagged live |
+| PRD details get lost in translation to code | Acceptance-criteria extraction + dual gates + independent verifier |
+| Team conventions live in a wiki nobody reads | Rules are data files; violations are blocked |
+
+In one sentence: **turn "the AI says it's done right" into "the machine proves it".**
 
 ## Included Skills
 
 | Skill | Description |
 |-------|-------------|
-| `quality-gate-workflow` | Quality gate workflow (Requirements → Plan → Code full-chain verification) |
+| `quality-gate-workflow` | Quality gate workflow (requirements → plan → code, process level) |
 | `skill-optimizer` | Automated skill optimization framework |
+| `prd-parse` | Lossless 1:1 parsing of raw requirement docs (pdf/doc/docx/xlsx/xls/html → Markdown) |
+| `api-design-review` / `db-migration-gate` | Vertical skill packs (API design review / DB migration gate) |
+
+## Governance Runtime (`governance/`)
+
+The code-level gate complementing skills (which load at the model's discretion): PostToolUse
+declarative rule checking (block violations exit 2, forcing the agent to fix and continue),
+machine receipts for local verification (DoD audit chain), a SHA-256 hash-chained event
+stream, SessionStart integrity self-check, and knowledge distillation (incremental
+watermark + human review gate). All rules and config are declarative with three-layer
+discovery — see [governance/README.md](governance/README.md).
+
+## Domain Packs (`domains/`)
+
+The open mechanism for a stack/team to plug its own gating rules into the governance
+runtime — this repo ships only the contract, template, scaffolding and validator;
+domain content is community-contributed. See
+[shared/domain-pack-spec.md](shared/domain-pack-spec.md) and
+[domains/_template/](domains/_template/).
 
 ## Templates
 
@@ -35,19 +74,21 @@ cd ~/quality-dev-skills
 .\scripts\install.ps1
 ```
 
-See [INSTALL.md](INSTALL.md) for detailed installation guide.
+See [INSTALL.md](INSTALL.md) for the detailed guide.
 
 ## Project Integration
 
 This repository is the **Base Layer** — fully independent, no project dependencies.
 
-### Dual-Layer Architecture
+### Three-Layer Architecture
 
 ```
-Base Layer (quality-dev-skills)        Project Layer (project-dev-skills)
-├── quality-gate-workflow              ├── project-dev-rule (AI-generated)
-├── skill-optimizer                    └── project-deploy
-└── project-dev-rule-template/
+Project    target project: .qgw/ overrides (highest priority) + AGENTS.md + project-dev-rule (AI-generated)
+Domain     domains/<pack>/ (community) or .qgw/packs/<pack>/ (private) — declarative rules/hints/verify conventions
+Base       quality-dev-skills:
+           ├── governance/            code-level governance runtime (hooks + rule engine + event stream)
+           ├── skills/                process-level quality gates + skill optimizer + prd-parse
+           └── shared/                skill templates + domain-pack contract + protocols
 ```
 
 ### Project Skill Generation
@@ -76,14 +117,13 @@ bash scripts/update-project-skill.sh /path/to/project
 
 ## Multi-Platform Support
 
-Supports multiple AI coding assistant platforms:
-
 | Platform | Adapter | Installation |
 |----------|---------|-------------|
 | **Claude Code** | `platforms/claude-code/` | Plugin install |
 | **Codex** | `platforms/codex/` | Plugin install |
 | **OpenCode** | `platforms/opencode/` | Server plugin |
-| **MiMoCode** | `platforms/minocode/` | Plugin install |
+| **MiMoCode** | `platforms/minicode/` | Plugin install |
+| **ZCode** | `platforms/zcode/` | Plugin marketplace (`python scripts/build-zcode-plugin.py`, then `/plugin marketplace add <repo>/dist`) |
 | **Universal** | `platforms/general/AGENTS.md` | Copy AGENTS.md |
 
 ## Update
@@ -111,8 +151,6 @@ This project's design and implementation draw from the ideas and practices of th
 
 ### Platform Ecosystem Acknowledgments
 
-Multi-platform support is made possible by the open ecosystems of:
-
 - **[Claude Code](https://claude.ai/)** (Anthropic) — Hooks mechanism, SKILL.md specification
 - **[Codex](https://openai.com/)** (OpenAI) — Server plugin architecture
 - **[OpenCode](https://github.com/opencode)** — Server plugin interface
@@ -122,11 +160,15 @@ Multi-platform support is made possible by the open ecosystems of:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) — including the [domain-pack contribution](CONTRIBUTING.md#贡献领域包domain-pack) guide.
 
 ## Code of Conduct
 
 See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md).
 
 ## License
 
