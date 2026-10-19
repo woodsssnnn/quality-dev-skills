@@ -30,11 +30,15 @@ function existsDir(dir) {
   }
 }
 
+/** 包名合法性：仅允许字母/数字/点/横线/下划线，禁止路径分隔与 ..（防逃逸）。 */
+const PACK_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
 /**
  * 解析一个领域包的目录：项目私有目录优先，其次本仓库 domains/<name>。
- * 都不存在返回 null。
+ * 都不存在返回 null。包名不合法直接返回 null。
  */
 function resolvePackDir(projectDir, name) {
+  if (typeof name !== 'string' || !PACK_NAME_RE.test(name)) return null;
   const candidates = [
     projectDir ? path.join(projectDir, '.qgw', 'packs', name) : null,
     path.join(RUNTIME_ROOT, '..', 'domains', name),

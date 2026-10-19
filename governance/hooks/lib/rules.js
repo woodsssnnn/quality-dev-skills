@@ -138,6 +138,8 @@ function runScriptRules(ruleSets, filePath) {
     if (!appliesTo(set, ext)) continue;
     for (const rule of set.rules) {
       if (!rule.id || !rule.script) continue;
+      // 脚本只能位于规则集目录内（拒绝绝对路径与 .. 逃逸）
+      if (path.isAbsolute(rule.script) || rule.script.split(/[\\/]/).includes('..')) continue;
       const scriptPath = path.join(set.sourceDir, rule.script);
       if (!fs.existsSync(scriptPath)) continue;
       const r = spawnSync('node', [scriptPath, filePath], {

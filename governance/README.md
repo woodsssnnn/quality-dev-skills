@@ -33,7 +33,9 @@ governance/
 ├── rules/builtin/          # 内置中立规则集（密钥泄漏、调试残留）
 ├── scripts/
 │   ├── event-log.js        # 事件流 append（哈希链）
-│   └── event-query.js      # 事件流查询（--tail/--chain-verify/--verify-last/--freq）
+│   ├── event-query.js      # 事件流查询（--tail/--chain-verify/--verify-last/--freq）
+│   ├── verify-links.js     # md 内链校验（CI / 单文件，断链 exit 1）
+│   └── blast-radius.js     # 符号影响面分析（def/call/ref 分类 + 同义符号线索）
 └── tests/run-tests.js      # 自测（node governance/tests/run-tests.js）
 ```
 

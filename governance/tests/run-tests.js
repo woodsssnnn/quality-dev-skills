@@ -313,6 +313,44 @@ test('e2e prompt-inject: 未配置关键词时零输出', () => {
   assert.strictEqual(r.stdout, '', '默认配置下不应有任何注入');
 });
 
+// ─── 8. 工具链端到端 ──────────────────────────────────────────────────────
+test('tool verify-links: 断链检出 / 好链通过', () => {
+  const dir = path.join(TMP, 'links');
+  fs.mkdirSync(path.join(dir, 'docs'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'docs', 'a.md'), '[good](b.md) [bad](nope.md)\n');
+  fs.writeFileSync(path.join(dir, 'docs', 'b.md'), '# B\n');
+  const r = spawnSync('node', [path.join(RUNTIME_ROOT, 'scripts', 'verify-links.js'), path.join(dir, 'docs')], {
+    encoding: 'utf-8', timeout: 30000,
+  });
+  assert.strictEqual(r.status, 1, '断链应 exit 1');
+  assert.ok(r.stdout.includes('[BROKEN]'), '输出应含 BROKEN');
+
+  fs.writeFileSync(path.join(dir, 'docs', 'a.md'), '[good](b.md) [ext](https://x.io) [anchor](#top)\n');
+  const r2 = spawnSync('node', [path.join(RUNTIME_ROOT, 'scripts', 'verify-links.js'), path.join(dir, 'docs')], {
+    encoding: 'utf-8', timeout: 30000,
+  });
+  assert.strictEqual(r2.status, 0, '修复后应 exit 0');
+});
+
+test('tool blast-radius: 命中分类 / 0 命中 exit 2', () => {
+  const dir = path.join(TMP, 'blast');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'Svc.java'),
+    'public class OrderService {\n  public void submitOrder(int x) {}\n  void caller() { submitOrder(1); }\n}\n');
+  const r = spawnSync('node', [path.join(RUNTIME_ROOT, 'scripts', 'blast-radius.js'),
+    'submitOrder', '--root', dir, '--lang', 'java', '--json'], {
+    encoding: 'utf-8', timeout: 30000,
+  });
+  assert.strictEqual(r.status, 0, `应命中 exit 0（stderr=${r.stderr}）`);
+  const out = JSON.parse(r.stdout);
+  assert.ok(out.total >= 2, '定义+调用至少 2 处');
+  assert.strictEqual(out.byRole.def.length, 1);
+
+  const r2 = spawnSync('node', [path.join(RUNTIME_ROOT, 'scripts', 'blast-radius.js'),
+    'noSuchSymbolXyz', '--root', dir], { encoding: 'utf-8', timeout: 30000 });
+  assert.strictEqual(r2.status, 2, '0 命中应 exit 2');
+});
+
 // ─── 汇总 ─────────────────────────────────────────────────────────────────
 const failed = results.filter(r => !r.ok);
 console.log(`\n${failed.length === 0 ? 'ALL PASS' : `SOME FAIL (${failed.length})`}（共 ${results.length} 项）`);
