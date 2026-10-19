@@ -1,0 +1,22 @@
+{
+  "id": "debug-residue",
+  "version": "1.0.0",
+  "description": "调试残留检查：提交前应清理的临时调试语句（非阻断提醒）。",
+  "appliesTo": {
+    "extensions": [".js", ".jsx", ".ts", ".tsx"]
+  },
+  "rules": [
+    {
+      "id": "DBG-001",
+      "severity": "warn",
+      "pattern": "^\\s*debugger;\\s*$",
+      "message": "发现 debugger 语句。提交前请移除，避免在他人环境触发断点。"
+    },
+    {
+      "id": "DBG-002",
+      "severity": "warn",
+      "pattern": "console\\.(log|debug)\\(",
+      "message": "发现 console.log/debug 调试输出。若为临时调试请移除；若为必要日志请改用项目的日志设施。"
+    }
+  ]
+}

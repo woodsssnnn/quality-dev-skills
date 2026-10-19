@@ -1,0 +1,10 @@
+{
+  "$comment": "governance 运行时内置默认配置——全部为空/中立值。领域包与项目 .qgw/governance.json 在此之上增量合并（列表拼接、对象覆盖）。字段说明见 governance/README.md。",
+  "version": 1,
+  "packs": [],
+  "promptMessages": [],
+  "verifyCommands": [],
+  "bashHints": [],
+  "hints": [],
+  "projectMarkers": { "files": [], "content": [] }
+}

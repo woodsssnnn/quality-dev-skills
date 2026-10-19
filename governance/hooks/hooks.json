@@ -1,0 +1,51 @@
+{
+  "description": "governance 通用治理门禁：PostToolUse(Edit|Write|Bash|Read) 规则校验+验证审计 / UserPromptSubmit 语境提示注入 / Stop 每轮统计(stderr) / SessionStart 完整性自检。关键词与规则集全部外置配置（见 governance/README.md）",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/integrity-check.cmd",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-checks.cmd",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prompt-inject.cmd",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/turn-stats.cmd",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
