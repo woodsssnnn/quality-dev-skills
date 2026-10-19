@@ -491,7 +491,7 @@ QGW-Items: 3/12 PASS, 9 SKIPPED
    ```markdown
    ### V1.1 (§5.1): 积分流水表字段齐全
    
-   - **验证方式**: `DESCRIBE _honor_point_ledger;`
+   - **验证方式**: `DESCRIBE biz_honor_point_ledger;`
    - **预期结果**: 27 个字段，类型正确
    - **实际结果**: ✅ 27 字段，类型正确
    - **状态**: PASS
@@ -553,7 +553,7 @@ QGW-Items: 3/12 PASS, 9 SKIPPED
 7. 追加到 SKILL.md 对应章节
 8. 在进化日志追加一行记录
 9. 更新 frontmatter `evolution_count += 1`
-10. 如参考资源中有相关 pattern，在规则中引用（如 `参见 -dev-rule/backend-5.0-pattern`）
+10. 如参考资源中有相关 pattern，在规则中引用（如 `参见 <参考技能>/<pattern 库路径>`）
 11. 输出：`[qgw:gate2:S5-evolve] ✅ 新增 AP-{N}、升级 CR-{M}`
 
 **无进化时**：

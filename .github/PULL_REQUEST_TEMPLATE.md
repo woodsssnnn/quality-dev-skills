@@ -24,7 +24,7 @@ Closes #
 - [ ] JSON 文件格式正确（`python3 -c "import json; json.load(open('file.json'))"`）
 - [ ] Shell 脚本通过 ShellCheck
 - [ ] Markdown 链接有效
-- [ ] 无  品牌残留（CHANGELOG 历史记录除外）
+- [ ] 无来源项目品牌残留（`bash scripts/check-banned-terms.sh` 通过）
 
 ## 截图 / 示例
 

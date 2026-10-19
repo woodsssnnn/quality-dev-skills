@@ -46,6 +46,8 @@ env/
 # --- Qoder / Agent runtime ---
 .qoder/
 .agents/
+.mimosa/
+.zcode/
 vibe_images/
 
 # --- Project workspace (generated at runtime, not tracked) ---

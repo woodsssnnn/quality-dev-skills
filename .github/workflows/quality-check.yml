@@ -45,26 +45,15 @@ jobs:
             shellcheck "$f"
           done
 
-  -scan:
-    name:  Brand Scan
+  banned-terms:
+    name: Banned Terms Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check for  references
-        run: |
-          # Exclude CHANGELOG (historical) and eval reports (examples)
-          result=$(grep -ri "" --include="*.md" --include="*.sh" --include="*.ps1" --include="*.json" \
-            --exclude-dir="eval" \
-            --exclude="CHANGELOG.md" \
-            --exclude="-dev-rule-report.md" \
-            . || true)
-          if [ -n "$result" ]; then
-            echo "⚠️ Found  references:"
-            echo "$result"
-            echo "Please remove or update these references."
-            exit 1
-          fi
-          echo "✅ No  references found"
+        with:
+          fetch-depth: 0
+      - name: Check for banned source-project terms
+        run: bash scripts/check-banned-terms.sh
 
   python-syntax:
     name: Python Syntax Check

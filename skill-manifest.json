@@ -1,194 +1,199 @@
 {
-  "generated_at": "2026-06-18T00:00:00Z",
-  "generator_version": "0.8.3.0",
+  "generated_at": "2026-10-19T03:13:39Z",
+  "generator_version": "0.8.0.0",
   "skills": [
     {
-      "id": "quality-gate-workflow",
-      "version": "0.8.3.0",
-      "path": "skills/quality-gate-workflow",
-      "description": "质量门禁工作流：需求 → Plan → 代码全链路验证，五层防线保障交付质量",
-      "category": "quality-assurance",
-      "triggers": {
-        "parameters": ["--gate1", "--gate2", "--all", "--self", "--analyze"],
-        "keywords": ["质量门禁", "gate", "plan", "verifier", "验收"]
-      },
-      "inputs": {
-        "required": ["PRD 文件或需求描述"],
-        "optional": ["--strict", "--lite", "--incremental", "--e2e", "--fix"]
-      },
-      "outputs": {
-        "artifacts": [
-          "docs/plans/*.md",
-          "docs/reports/*.md",
-          "docs/verification/*.md",
-          ".qgw-engine-state.json"
-        ],
-        "side_effects": [
-          "更新 docs/INDEX.md",
-          "写入 .qgw-engine-state.json 状态文件"
-        ]
-      },
-      "dependencies": {
-        "runtime": ["python>=3.8"],
-        "skills": [],
-        "tools": ["Read", "Write", "Bash", "Grep", "Glob"]
-      },
-      "compatibility": {
-        "min_version": "0.5.0.0",
-        "platforms": ["claude-code", "codex", "opencode", "minocode", "general", "qoder"]
-      },
-      "integration_points": {
-        "extends": [],
-        "extended_by": ["skill-optimizer"],
-        "shares_artifacts_with": ["skill-optimizer"]
-      }
-    },
-    {
-      "id": "skill-optimizer",
-      "version": "0.8.3.0",
-      "path": "skills/skill-optimizer",
-      "description": "技能自动优化框架：rollout → score → bounded edit → gate 循环，提升技能质量",
-      "category": "optimization",
-      "triggers": {
-        "parameters": ["--optimize"],
-        "keywords": ["优化", "optimize", "score", "评分"]
-      },
-      "inputs": {
-        "required": ["目标技能 SKILL.md 路径"],
-        "optional": ["--dry-run", "--target-score"]
-      },
-      "outputs": {
-        "artifacts": [
-          "skills/*/SKILL.md (modified)",
-          "eval/-dev-rule-report.md"
-        ],
-        "side_effects": [
-          "修改目标技能文件内容"
-        ]
-      },
-      "dependencies": {
-        "runtime": ["python>=3.8"],
-        "skills": ["quality-gate-workflow"],
-        "tools": ["Read", "Write", "Bash", "Grep"]
-      },
-      "compatibility": {
-        "min_version": "0.5.0.0",
-        "platforms": ["claude-code", "codex", "opencode", "minocode", "general", "qoder"]
-      },
-      "integration_points": {
-        "extends": ["quality-gate-workflow"],
-        "extended_by": [],
-        "shares_artifacts_with": ["quality-gate-workflow"]
-      }
-    },
-    {
-      "id": "qgw-init",
-      "version": "0.8.3.0",
-      "path": "skills/qgw-init",
-      "description": "项目初始化向导：7 步交互式引导，完成 QGW 质量门禁 + Dev-Rule 的全套初始化配置",
-      "category": "initialization",
-      "triggers": {
-        "parameters": ["--init"],
-        "keywords": ["初始化", "init", "初始化 QGW", "setup QGW", "setup quality gate"]
-      },
-      "inputs": {
-        "required": ["项目根目录"],
-        "optional": ["--platform", "--mode", "--with-prd", "--yes"]
-      },
-      "outputs": {
-        "artifacts": [
-          ".qgw/config.json",
-          ".qgw/constitution.md",
-          "docs/plans/",
-          "docs/verification/",
-          "docs/reports/",
-          "docs/sessions/"
-        ],
-        "side_effects": [
-          "在项目根目录创建 .qgw/ 配置目录",
-          "生成 project-dev-rule 技能骨架",
-          "更新项目 CLAUDE.md / AGENTS.md 绑定"
-        ]
-      },
-      "dependencies": {
-        "runtime": ["python>=3.8"],
-        "skills": ["quality-gate-workflow"],
-        "tools": ["Read", "Write", "Bash", "Grep", "Glob"]
-      },
-      "compatibility": {
-        "min_version": "0.5.0.0",
-        "platforms": ["claude-code", "codex", "opencode", "minocode", "general", "qoder"]
-      },
-      "integration_points": {
-        "extends": [],
-        "extended_by": ["quality-gate-workflow", "project-dev-rule"],
-        "shares_artifacts_with": ["quality-gate-workflow"]
-      }
-    },
-    {
       "id": "api-design-review",
-      "version": "0.8.3.0",
+      "version": "0.8.0.1",
       "path": "skills/api-design-review",
       "description": "REST API 设计审查：检查 URL 命名、HTTP 方法、响应码、分页和 OpenAPI 一致性",
       "category": "vertical",
       "triggers": {
-        "parameters": ["--api-review"],
-        "keywords": ["API review", "REST convention", "endpoint design", "OpenAPI"]
+        "parameters": [
+          "--api-review"
+        ],
+        "keywords": [
+          "API review",
+          "REST convention",
+          "endpoint design",
+          "OpenAPI"
+        ]
       },
       "inputs": {
-        "required": ["OpenAPI spec 文件（JSON）或路由定义文件"],
-        "optional": ["--routes 模式标记"]
+        "required": [
+          "OpenAPI spec 文件（JSON）或路由定义文件"
+        ],
+        "optional": [
+          "--routes 模式标记"
+        ]
       },
       "outputs": {
         "artifacts": [],
-        "side_effects": ["控制台输出检查结果"]
+        "side_effects": [
+          "控制台输出检查结果"
+        ]
       },
       "dependencies": {
-        "runtime": ["python>=3.8"],
-        "skills": ["quality-gate-workflow"],
-        "tools": ["Read", "Bash"]
+        "runtime": [
+          "python>=3.8"
+        ],
+        "skills": [
+          "quality-gate-workflow"
+        ],
+        "tools": [
+          "Read",
+          "Bash"
+        ]
       },
       "compatibility": {
         "min_version": "0.5.0.0",
-        "platforms": ["claude-code", "codex", "opencode", "minocode", "general", "qoder"]
+        "platforms": [
+          "claude-code",
+          "codex",
+          "opencode",
+          "minocode",
+          "general"
+        ]
       },
       "integration_points": {
-        "extends": ["quality-gate-workflow"],
+        "extends": [
+          "quality-gate-workflow"
+        ],
         "extended_by": [],
-        "shares_artifacts_with": ["quality-gate-workflow"]
+        "shares_artifacts_with": [
+          "quality-gate-workflow"
+        ]
       }
     },
     {
       "id": "db-migration-gate",
-      "version": "0.8.3.0",
+      "version": "0.8.0.1",
       "path": "skills/db-migration-gate",
       "description": "数据库迁移门禁：检查迁移文件安全性，防止危险 schema 变更进入生产环境",
       "category": "vertical",
       "triggers": {
-        "parameters": ["--db-migration"],
-        "keywords": ["migration review", "db migration", "schema change", "alembic", "flyway"]
+        "parameters": [
+          "--db-migration"
+        ],
+        "keywords": [
+          "migration review",
+          "db migration",
+          "schema change",
+          "alembic",
+          "flyway"
+        ]
       },
       "inputs": {
-        "required": ["迁移文件目录或文件路径"],
-        "optional": ["--strict"]
+        "required": [
+          "迁移文件目录或文件路径"
+        ],
+        "optional": [
+          "--strict"
+        ]
       },
       "outputs": {
         "artifacts": [],
-        "side_effects": ["控制台输出检查结果"]
+        "side_effects": [
+          "控制台输出检查结果"
+        ]
       },
       "dependencies": {
-        "runtime": ["python>=3.8"],
-        "skills": ["quality-gate-workflow"],
-        "tools": ["Read", "Bash"]
+        "runtime": [
+          "python>=3.8"
+        ],
+        "skills": [
+          "quality-gate-workflow"
+        ],
+        "tools": [
+          "Read",
+          "Bash"
+        ]
       },
       "compatibility": {
         "min_version": "0.5.0.0",
-        "platforms": ["claude-code", "codex", "opencode", "minocode", "general", "qoder"]
+        "platforms": [
+          "claude-code",
+          "codex",
+          "opencode",
+          "minocode",
+          "general"
+        ]
       },
       "integration_points": {
-        "extends": ["quality-gate-workflow"],
+        "extends": [
+          "quality-gate-workflow"
+        ],
         "extended_by": [],
-        "shares_artifacts_with": ["quality-gate-workflow"]
+        "shares_artifacts_with": [
+          "quality-gate-workflow"
+        ]
+      }
+    },
+    {
+      "id": "qgw-init",
+      "version": "0.8.0.1",
+      "path": "skills/qgw-init",
+      "description": "|-",
+      "category": "quality-assurance",
+      "dependencies": {
+        "runtime": [
+          "bash"
+        ],
+        "skills": [],
+        "tools": [
+          "Read",
+          "Bash",
+          "Grep"
+        ]
+      },
+      "outputs": {
+        "artifacts": [],
+        "side_effects": []
+      }
+    },
+    {
+      "id": "quality-gate-workflow",
+      "version": "0.8.3.0",
+      "path": "skills/quality-gate-workflow",
+      "description": "|-",
+      "category": "quality-assurance",
+      "dependencies": {
+        "runtime": [
+          "bash",
+          "python>=3.8"
+        ],
+        "skills": [],
+        "tools": [
+          "Read",
+          "Bash",
+          "Grep"
+        ]
+      },
+      "outputs": {
+        "artifacts": [],
+        "side_effects": []
+      }
+    },
+    {
+      "id": "skill-optimizer",
+      "version": "0.8.0.1",
+      "path": "skills/skill-optimizer",
+      "description": "Use when optimizing existing skill quality by best-practice rules",
+      "category": "quality-assurance",
+      "dependencies": {
+        "runtime": [
+          "python>=3.8"
+        ],
+        "skills": [],
+        "tools": [
+          "Read",
+          "Bash",
+          "Grep"
+        ]
+      },
+      "outputs": {
+        "artifacts": [],
+        "side_effects": []
       }
     }
   ]

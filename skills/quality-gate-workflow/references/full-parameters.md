@@ -45,7 +45,7 @@
 
 **详细步骤** → [self-check-workflow.md](self-check-workflow.md)
 
-**示例**：`"自检 --self"` / `"复盘上个会话 --self 0610-tcl"` / `"严格自检 --self --strict"`
+**示例**：`"自检 --self"` / `"复盘上个会话 --self 0610-demo"` / `"严格自检 --self --strict"`
 
 ## Gate 1/2 详细步骤
 

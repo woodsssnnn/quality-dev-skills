@@ -13,7 +13,7 @@
       "id": "EP001",
       "category": "verification",
       "description": "验收标准太模糊，用泛称代替具体规格",
-      "promotedFrom": ["tcl-finance", "未命名项目"],
+      "promotedFrom": ["sample-project", "未命名项目"],
       "totalPromotions": 2,
       "status": "active",
       "examples": [
@@ -25,7 +25,7 @@
       "id": "EP002",
       "category": "self-review",
       "description": "自验通过但 verifier 抓到偏差（自我审查偏见）",
-      "promotedFrom": ["tcl-finance"],
+      "promotedFrom": ["sample-project"],
       "totalPromotions": 1,
       "status": "active",
       "examples": [
@@ -37,7 +37,7 @@
       "id": "EP003",
       "category": "plan-drift",
       "description": "Plan 翻译需求时丢失细节，代码照 Plan 写但偏离需求",
-      "promotedFrom": ["tcl-finance"],
+      "promotedFrom": ["sample-project"],
       "totalPromotions": 1,
       "status": "active",
       "examples": [

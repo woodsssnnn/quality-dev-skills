@@ -174,7 +174,7 @@ integration:
 5. **绑定 CLAUDE.md**：在项目 CLAUDE.md 中追加 `dev_rule.path` 配置（如不存在）
 
 **用户交互**：
-- 询问用户是否声明参考技能（如 -dev-rule）
+- 询问用户是否声明参考技能（团队自有规范类技能）
 - 询问用户项目领域和技术栈（或自动从 CLAUDE.md 提取）
 
 输出：
@@ -182,7 +182,7 @@ integration:
 [qgw-init:Step4.5] Dev-Rule 初始化 ...
   技能位置: .agents/skills/project-dev-rule/
   项目身份: ✅ 已填写
-  参考资源: -dev-rule ✅ (或 "无")
+  参考资源: <参考技能名> ✅ (或 "无")
   CLAUDE.md: ✅ 已绑定 dev_rule.path
 ```
 

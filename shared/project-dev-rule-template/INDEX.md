@@ -20,7 +20,7 @@ Gate 2 S5-evolve ──沉淀反模式/升级───→│
                                      │
 advisor-templates ←─注入 DEV_RULE_SUMMARY
 skill-optimizer ←──读取进化日志作为动态评分规则
-reference_skills ←──只读参考（如 -dev-rule）
+reference_skills ←──只读参考（如团队自有规范技能）
 ```
 
 详见 `shared/skill-protocol.md` 的技能协同关系和 `skills/quality-gate-workflow/references/knowledge-compounding.md` 的完整闭环图。

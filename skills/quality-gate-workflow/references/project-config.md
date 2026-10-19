@@ -146,8 +146,8 @@ quality-gate-workflow运行时会：
 {
   "reference_skills": [
     {
-      "id": "-dev-rule",
-      "path": ".claude/skills/-dev-rule",
+      "id": "team-dev-rule",
+      "path": ".claude/skills/team-dev-rule",
       "role": "pattern_source",
       "load_scope": ["references/backend/patterns", "references/frontend/patterns", "references/frontend/rules"]
     }
@@ -171,7 +171,7 @@ quality-gate-workflow运行时会：
 ```json
 {
   "advisor": {
-    "project_domain": "TCL Finance — 基于  5.2.0 流程管理平台的客户定制交付项目",
+    "project_domain": "示例项目 — 企业流程管理平台的客户定制交付项目",
     "tech_stack": "后端 Java/Spring Boot/MyBatis, 前端 React/Next.js/antd v4/Formily",
     "glossary_path": ".qgw/glossary.md",
     "conventions_summary_path": ".agents/skills/project-dev-rule/SKILL.md"
