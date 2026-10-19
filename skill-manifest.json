@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-19T03:13:39Z",
+  "generated_at": "2026-10-19T03:46:08Z",
   "generator_version": "0.8.0.0",
   "skills": [
     {
@@ -130,6 +130,30 @@
       }
     },
     {
+      "id": "prd-parse",
+      "version": "0.9.0.0",
+      "path": "skills/prd-parse",
+      "description": "|-",
+      "name": "prd-parse",
+      "category": "document-processing",
+      "summary": "原始需求文档 1:1 解析（pdf/doc/docx/xlsx/xls/html → Markdown，文字全量/表格保真/图片落盘/manifest 明示边界）",
+      "entry": "SKILL.md",
+      "scripts": [
+        "scripts/prd_parse.py"
+      ],
+      "evaluations": 3,
+      "dependencies": {
+        "runtime": [
+          "python>=3.8"
+        ],
+        "skills": [],
+        "tools": [
+          "Read",
+          "Bash"
+        ]
+      }
+    },
+    {
       "id": "qgw-init",
       "version": "0.8.0.1",
       "path": "skills/qgw-init",
@@ -159,8 +183,8 @@
       "category": "quality-assurance",
       "dependencies": {
         "runtime": [
-          "bash",
-          "python>=3.8"
+          "python>=3.8",
+          "bash"
         ],
         "skills": [],
         "tools": [

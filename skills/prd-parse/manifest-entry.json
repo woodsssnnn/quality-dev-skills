@@ -1,0 +1,10 @@
+{
+  "name": "prd-parse",
+  "path": "skills/prd-parse",
+  "version": "0.9.0.0",
+  "category": "document-processing",
+  "summary": "原始需求文档 1:1 解析（pdf/doc/docx/xlsx/xls/html → Markdown，文字全量/表格保真/图片落盘/manifest 明示边界）",
+  "entry": "SKILL.md",
+  "scripts": ["scripts/prd_parse.py"],
+  "evaluations": 3
+}
