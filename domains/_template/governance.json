@@ -1,0 +1,28 @@
+{
+  "$comment": "领域包配置增量：在 governance 运行时默认配置之上合并（列表拼接、标量覆盖）。全部字段可选。字段说明见仓库根 shared/domain-pack-spec.md。以下均为示例，按需删改。",
+  "promptMessages": [
+    {
+      "id": "baseline-first",
+      "pattern": "接口|表结构|枚举",
+      "message": "[my-pack 提醒] 动手前先在本仓核实既有实现，避免假设式推断。"
+    }
+  ],
+  "verifyCommands": [
+    {
+      "name": "verify-local",
+      "commandPattern": "node\\s+\\S*verify-local\\.js",
+      "passPattern": "=== verify: PASS ===",
+      "failPattern": "=== verify: FAIL ==="
+    }
+  ],
+  "bashHints": [],
+  "hints": [
+    {
+      "id": "data-contract",
+      "extensions": [".ts", ".tsx"],
+      "filenamePattern": "(Response|Request|Dto|Vo|Api|Props)\\.tsx?$",
+      "cap": 3,
+      "message": "[my-pack 数据契约] 你改了跨组件契约类型：删字段/改名会让消费方静默拿到 undefined。先 grep 全部消费点再动手。"
+    }
+  ]
+}

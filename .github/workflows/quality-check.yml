@@ -139,6 +139,26 @@ jobs:
           if ($errors -gt 0) { exit 1 }
           Write-Host "✅ All PowerShell scripts pass syntax check"
 
+  domain-packs:
+    name: Domain Packs Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate all domain packs
+        run: |
+          if [ -d domains ]; then
+            for d in domains/*/; do
+              echo "Validating $d"
+              python scripts/validate-domain-pack.py "$d"
+            done
+          else
+            echo "no domains/ directory, skipping"
+          fi
+
   manifest-check:
     name: Manifest Consistency Check
     runs-on: ubuntu-latest

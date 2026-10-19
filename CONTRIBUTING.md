@@ -116,6 +116,34 @@ skills/your-skill-name/
 - 禁止 `pip install` 或 `import` 第三方包
 - 这确保技能在任何 Python ≥ 3.8 环境即开即用
 
+## 贡献领域包（Domain Pack）
+
+领域包让你的技术栈/团队把**自己的**门禁规则接入 governance 运行时，无需改
+运行时本身。本仓库保持中立——领域内容由社区以领域包形式贡献。契约详见
+[shared/domain-pack-spec.md](shared/domain-pack-spec.md)。
+
+### 快速开始
+
+```bash
+# 1. 从模板生成骨架（在期望创建位置的父目录执行）
+python scripts/create-domain-pack.py your-stack
+
+# 2. 编辑规则（rules/*.json，声明式：正则 + severity + 修复路径说明）
+
+# 3. 本地校验（CI 对 domains/ 下所有包执行同一校验）
+python scripts/validate-domain-pack.py <pack-dir>
+```
+
+### 要求
+
+- 基于 `domains/_template/` 脚手架；`pack.json` 的 id 与目录名一致（kebab-case）
+- 至少一个规则集；每条规则的 `message` 写清"为什么禁止 + 应该怎么改"
+- `validate-domain-pack.py` 校验通过
+- 附至少 1 个评测示例（规则命中 / 放行各一）
+- **中立性红线**：包内不得出现来源项目品牌词、真实凭据、内网地址、客户名
+  （CI 禁词扫描覆盖 domains/）
+- 放入 `domains/<your-stack>/` 提 PR
+
 ## 许可
 
 贡献的代码将以 MIT License 发布。提交 PR 即表示你同意将贡献以 MIT License 授权。

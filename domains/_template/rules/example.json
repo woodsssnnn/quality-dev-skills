@@ -1,0 +1,22 @@
+{
+  "id": "my-pack-rules",
+  "version": "0.1.0",
+  "description": "示例规则集——展示声明式规则的两种 severity。确认理解后请替换为你领域的真实规则。",
+  "appliesTo": {
+    "extensions": [".js", ".jsx", ".ts", ".tsx"]
+  },
+  "rules": [
+    {
+      "id": "R-001",
+      "severity": "block",
+      "pattern": "\\beval\\s*\\(",
+      "message": "禁止使用 eval：动态执行代码是注入与调试黑洞。请改用显式分支/JSON.parse/查找表。"
+    },
+    {
+      "id": "R-002",
+      "severity": "warn",
+      "pattern": "\\bFIXME\\b",
+      "message": "FIXME 残留：合入前请处理或转为 issue 跟踪。"
+    }
+  ]
+}

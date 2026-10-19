@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "my-pack",
+  "name": "我的领域包（改为你的人类可读名称）",
+  "version": "0.1.0",
+  "description": "一句话说明本领域包面向什么技术栈/团队、解决什么治理问题。",
+  "author": "your-name",
+  "license": "MIT",
+  "compatibility": {
+    "minRuntime": "0.9.0.0",
+    "maxRuntime": "1.0.0.0"
+  }
+}
