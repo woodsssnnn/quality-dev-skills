@@ -1,0 +1,12 @@
+{
+  "name": "quality-dev-skills",
+  "version": "0.9.0.3",
+  "description": "Quality & governance bundle — 6 skills (process-level quality gating, lossless PRD parsing, skill optimizer, init wizard, two vertical packs) plus the governance code-gating runtime (declarative PostToolUse rule engine, verification machine receipts, hash-chained event stream, integrity self-check) and 3 neutral agent templates. The whole repo IS the plugin: self-contained by design.",
+  "author": { "name": "quality-dev-skills" },
+  "license": "MIT",
+  "homepage": "https://gitcode.com/songnan/quality-dev-skills",
+  "keywords": ["quality", "gate", "governance", "hooks", "skills", "workflow"],
+  "skills": "skills",
+  "hooks": "hooks",
+  "agents": "governance/agents"
+}

@@ -63,6 +63,19 @@ exit 2 强制 agent 继续修）、本地验证机器凭证（DoD 审计链）�
 
 ## 安装
 
+### 插件市场（推荐，整仓即插件）
+
+ZCode / Claude Code 的"添加插件市场"直接填 GitHub 地址：
+
+```
+woodsssnnn/quality-dev-skills
+```
+
+装上即得全家桶：6 个技能 + governance 代码门禁运行时 + 3 个 agent 模板。
+> 已知边界：hooks 为 Windows 优先（.cmd 包装），mac/linux 技能可用、hooks 跨平台适配中。
+
+### 脚本安装（软链，改源码立即生效）
+
 ```bash
 git clone https://gitcode.com/songnan/quality-dev-skills.git ~/quality-dev-skills
 cd ~/quality-dev-skills

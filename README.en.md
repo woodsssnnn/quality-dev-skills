@@ -66,7 +66,18 @@ domain content is community-contributed. See
 
 ## Installation
 
-### Linux / macOS / Git Bash
+### Plugin Marketplace (recommended — the whole repo IS the plugin)
+
+Paste the GitHub address into ZCode / Claude Code's "Add plugin marketplace":
+
+```
+woodsssnnn/quality-dev-skills
+```
+
+You get the full bundle: 6 skills + the governance code-gating runtime + 3 agent templates.
+> Known limitation: hooks are Windows-first (.cmd wrappers); on mac/linux skills and agents work, hooks cross-platform support is in progress.
+
+### Script Install (symlinks; edits take effect immediately)
 
 ```bash
 git clone https://gitcode.com/songnan/quality-dev-skills.git ~/quality-dev-skills
