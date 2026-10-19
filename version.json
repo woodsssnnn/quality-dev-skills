@@ -1,7 +1,7 @@
 {
   "template": {
     "name": "project-dev-rule-template",
-    "version": "0.8.3.0",
+    "version": "0.9.0.0",
     "description": "项目开发规范技能模板",
     "compatibility": {
       "min_project_version": "0.5.0.0",
@@ -10,27 +10,50 @@
   },
   "skills": {
     "quality-gate-workflow": {
-      "version": "0.8.3.0",
+      "version": "0.9.0.0",
       "description": "质量门禁工作流"
     },
     "skill-optimizer": {
-      "version": "0.8.3.0",
+      "version": "0.9.0.0",
       "description": "技能自动优化框架"
     },
     "qgw-init": {
-      "version": "0.8.3.0",
+      "version": "0.9.0.0",
       "description": "项目初始化引导技能"
     },
     "api-design-review": {
-      "version": "0.8.3.0",
+      "version": "0.9.0.0",
       "description": "API 设计审查门禁"
     },
     "db-migration-gate": {
-      "version": "0.8.3.0",
+      "version": "0.9.0.0",
       "description": "数据库迁移质量门禁"
+    },
+    "prd-parse": {
+      "version": "0.9.0.0",
+      "description": "原始需求文档 1:1 解析"
     }
   },
+  "governance": {
+    "version": "0.9.0.0",
+    "description": "通用代码治理运行时（hooks 门禁/声明式规则引擎/事件流/判题机/领域包契约）"
+  },
   "changelog": [
+    {
+      "version": "0.9.0.0",
+      "date": "2026-10-19",
+      "changes": [
+        "P0: 新增 governance/ 通用代码治理运行时——PostToolUse 规则门禁（block→exit 2）、声明式规则引擎（三层发现：项目 .qgw/ > 领域包 > 内置中立规则）、verify 机器凭证（DoD 审计链）、SHA-256 哈希链事件流、SessionStart 完整性自保护、提示限频、Stop 轮统计（仅 stderr）",
+        "P0: 领域包开放机制——shared/domain-pack-spec.md 契约 + domains/_template/ 脚手架 + create-domain-pack.py 一键生成 + validate-domain-pack.py 校验（CI 覆盖），零内置领域内容，保持仓库中立",
+        "P0: 新增 prd-parse 技能——pdf/doc/docx/xlsx/xls/html → 1:1 Markdown（docx/xlsx/html 零依赖；实体扩展防护；manifest 明示边界绝不静默丢）",
+        "P1: governance/agents/ 三权分立中立模板（reviewer 验收三态+凭证核对 / verifier 只跑不改+结论可机判 / db-migrator 五步验证）",
+        "P1: governance 知识工程工具链——verify-links md 内链校验、blast-radius 符号影响面分析、distill-scope 蒸馏范围（增量水位+人审闸）",
+        "P1: qgw-init 新增 Step 4.7 governance 门禁装配引导；知识工程工具并入事件流闭环",
+        "P2: 全仓中立化清理（示例措辞/示例配置/客户名）+ 禁词扫描门禁（check-banned-terms.sh，本地与 CI 共用）",
+        "P2: 版本一致性修复——全部技能 frontmatter/platforms manifest 统一 0.9.0.0；修复 platforms/minicode 目录异常",
+        "测试: governance 自测 25 项（模块级+hook 端到端）；存量 pytest 210 项不受影响"
+      ]
+    },
     {
       "version": "0.8.3.0",
       "date": "2026-06-20",

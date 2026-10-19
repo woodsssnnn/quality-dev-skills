@@ -2,14 +2,30 @@
 
 [English](README.en.md) | 中文
 
-通用 AI 技能仓库。提供质量门禁工作流、技能优化框架和项目技能模板，可被任何项目复用。
+通用 AI 技能仓库。提供**代码治理运行时**、质量门禁工作流、技能优化框架、领域包开放机制和项目技能模板，可被任何项目复用——仓库保持中立，不含任何领域专属内容。
 
 ## 包含的技能
 
 | 技能 | 说明 |
 |------|------|
-| `quality-gate-workflow` | 质量门禁工作流（需求→Plan→代码全链路验证） |
+| `quality-gate-workflow` | 质量门禁工作流（需求→Plan→代码全链路验证，流程级） |
 | `skill-optimizer` | 技能自动优化框架 |
+| `prd-parse` | 原始需求文档 1:1 解析（pdf/doc/docx/xlsx/xls/html → Markdown） |
+| `api-design-review` / `db-migration-gate` | 垂直技能包（API 设计审查 / DB 迁移门禁） |
+
+## 治理运行时（governance/）
+
+与技能（模型自主加载）互补的**代码级门禁**：PostToolUse 规则校验（block 违规
+exit 2 强制 agent 继续修）、本地验证机器凭证（DoD 审计链）、SHA-256 哈希链事件
+流、SessionStart 完整性自保护、知识蒸馏（增量水位 + 人审闸）。规则与配置全部
+声明式、三层发现，详见 [governance/README.md](governance/README.md)。
+
+## 领域包（domains/）
+
+技术栈/团队把自己的门禁规则接入 governance 运行时的开放机制——本仓库只提供
+契约、模板、脚手架与校验器，领域内容由社区贡献。见
+[shared/domain-pack-spec.md](shared/domain-pack-spec.md) 与
+[domains/_template/](domains/_template/)。
 
 ## 模板
 
@@ -29,13 +45,15 @@ bash scripts/install.sh
 
 本仓库是 **Base 层**，完全独立，不依赖任何项目层。
 
-### 双层架构
+### 三层架构
 
 ```
-Base 层 (quality-dev-skills)          Project 层 (project-dev-skills)
-├── quality-gate-workflow              ├── project-dev-rule (AI生成)
-├── skill-optimizer                    └── project-deploy
-└── project-dev-rule-template/
+项目层     目标项目内：.qgw/ 覆盖（最高优先）+ AGENTS.md + project-dev-rule (AI生成)
+领域包层   domains/<pack>/（社区贡献）或 .qgw/packs/<pack>/（项目私有）——声明式规则/提示/验证约定
+Base 层    quality-dev-skills：
+           ├── governance/            代码级治理运行时（hooks + 规则引擎 + 事件流）
+           ├── skills/                流程级质量门禁 + 技能优化 + prd-parse 等
+           └── shared/                技能模板 + 领域包契约 + 协议
 ```
 
 ### 项目技能生成

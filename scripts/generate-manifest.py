@@ -16,7 +16,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCRIPT_VERSION = "0.8.0.0"
+SCRIPT_VERSION = "0.9.0.0"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / "skills"
 MANIFEST_PATH = REPO_ROOT / "skill-manifest.json"

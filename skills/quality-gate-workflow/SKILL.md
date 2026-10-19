@@ -29,7 +29,7 @@ triggers:
     - verifier
     - 验收
 metadata:
-  version: 0.8.3.0
+  version: 0.9.0.0
 integration:
   extends: []
   extended_by:

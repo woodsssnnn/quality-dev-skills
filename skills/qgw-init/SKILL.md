@@ -25,7 +25,7 @@ triggers:
     - setup QGW
     - setup quality gate
 metadata:
-  version: 0.8.0.1
+  version: 0.9.0.0
 integration:
   extends: []
   extended_by:
@@ -143,7 +143,7 @@ integration:
     "conventions_summary_path": ".agents/skills/project-dev-rule/SKILL.md"
   },
   "initialized": "<ISO-8601 timestamp>",
-  "version": "0.8.0.0"
+  "version": "0.9.0.0"
 }
 ```
 

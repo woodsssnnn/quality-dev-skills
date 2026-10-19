@@ -44,7 +44,7 @@ anti-patterns/
 1. **触发时机**：Gate evolve 写入前检查目标文件行数，≥ 200 行则先拆分再写入
 2. **分类维度**：按技术领域（frontend/backend/integration）或按业务模块拆分
 3. **INDEX.md 格式**：每条规则一行摘要（`### AP-NNN: [标题] → [子文件]`），便于快速定位
-4. **SKILL.md 更新**：规则索引表的 L3 文件列更新为目录路径（`[anti-patterns/](./anti-patterns/INDEX.md)`）
+4. **SKILL.md 更新**：规则索引表的 L3 文件列更新为目录路径（`anti-patterns/INDEX.md`）
 5. **evaluate.py 适配**：扫描 L3 时需递归读取目录内所有 .md 文件
 
 **各 L3 文件的拆分阈值和策略**：

@@ -159,6 +159,37 @@ jobs:
             echo "no domains/ directory, skipping"
           fi
 
+  governance-tests:
+    name: Governance Runtime Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run governance self-tests
+        run: |
+          node governance/tests/run-tests.js
+          node governance/hooks/integrity-check.js --self-test
+
+  prd-parse-smoke:
+    name: PRD Parse Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: HTML backend smoke test
+        run: |
+          python -m py_compile skills/prd-parse/scripts/prd_parse.py
+          mkdir -p /tmp/prd-smoke
+          printf '<!doctype html><html><head><meta charset="utf-8"><title>t</title></head><body><h1>标题</h1><table><tr><td>a</td></tr></table></body></html>' > /tmp/prd-smoke/doc.html
+          python skills/prd-parse/scripts/prd_parse.py /tmp/prd-smoke
+          grep -q '| a |' /tmp/prd-smoke/parsed/doc.md
+
   manifest-check:
     name: Manifest Consistency Check
     runs-on: ubuntu-latest

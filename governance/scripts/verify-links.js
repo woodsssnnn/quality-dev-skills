@@ -67,7 +67,10 @@ function verifyFile(filePath, baseDir) {
   }
   const fileDir = path.dirname(filePath);
 
-  for (const match of content.matchAll(LINK_RE)) {
+  for (const match of content
+    // 跳过围栏代码块：块内的 []() 是示例文本（常出现在"目录组织模式"示例里），不是真实链接
+    .replace(/```[\s\S]*?```/g, '')
+    .matchAll(LINK_RE)) {
     const href = match[1].trim();
     if (SKIP_PREFIX.some(p => href.startsWith(p))) continue;
     if (href.endsWith('/')) continue;

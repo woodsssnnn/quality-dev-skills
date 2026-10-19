@@ -1,0 +1,13 @@
+{
+  "name": "governance",
+  "version": "0.9.0.0",
+  "description": "通用代码治理运行时——PostToolUse 声明式规则门禁（block 违规 exit 2）+ 验证机器凭证（DoD 审计链）+ 哈希链事件流 + SessionStart 完整性自保护 + 轮统计。规则/关键词/验证约定全部外置配置，运行时零领域假设；领域规则经 domain pack 或项目 .qgw/ 接入。",
+  "description_i18n": {
+    "en": "Universal code governance runtime — declarative PostToolUse rule gating (block via exit 2) + verification machine receipts (DoD audit chain) + hash-chained event stream + SessionStart integrity self-check + per-turn stats. All rules/keywords/verify conventions are external config; domain rules plug in via domain packs or project .qgw/.",
+    "zh-CN": "通用代码治理运行时——PostToolUse 声明式规则门禁（block 违规 exit 2）+ 验证机器凭证（DoD 审计链）+ 哈希链事件流 + SessionStart 完整性自保护 + 轮统计。规则/关键词/验证约定全部外置配置，运行时零领域假设；领域规则经 domain pack 或项目 .qgw/ 接入。"
+  },
+  "author": { "name": "quality-dev-skills" },
+  "license": "MIT",
+  "hooks": "hooks",
+  "agents": "agents"
+}

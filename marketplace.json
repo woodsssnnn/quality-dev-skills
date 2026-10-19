@@ -1,0 +1,16 @@
+{
+  "name": "quality-dev-skills-marketplace",
+  "description": "通用质量与治理技能市场——流程级质量门禁技能 + 代码级治理运行时插件，中立开放、领域内容经 domain pack 由社区贡献。",
+  "owner": {
+    "name": "quality-dev-skills"
+  },
+  "plugins": [
+    {
+      "name": "governance",
+      "description": "通用代码治理运行时：声明式规则门禁 + 验证机器凭证 + 哈希链事件流 + 完整性自保护。hooks/agents 形态，配置全部外置。",
+      "author": { "name": "quality-dev-skills" },
+      "source": "./governance",
+      "category": "development"
+    }
+  ]
+}

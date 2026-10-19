@@ -16,7 +16,7 @@ triggers:
     - endpoint design
     - OpenAPI
 metadata:
-  version: 0.8.0.1
+  version: 0.9.0.0
 integration:
   extends:
     - quality-gate-workflow

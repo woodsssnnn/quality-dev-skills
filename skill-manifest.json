@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-19T03:46:08Z",
-  "generator_version": "0.8.0.0",
+  "generated_at": "2026-10-19T03:55:15Z",
+  "generator_version": "0.9.0.0",
   "skills": [
     {
       "id": "api-design-review",
@@ -155,7 +155,7 @@
     },
     {
       "id": "qgw-init",
-      "version": "0.8.0.1",
+      "version": "0.9.0.0",
       "path": "skills/qgw-init",
       "description": "|-",
       "category": "quality-assurance",
@@ -177,14 +177,14 @@
     },
     {
       "id": "quality-gate-workflow",
-      "version": "0.8.3.0",
+      "version": "0.9.0.0",
       "path": "skills/quality-gate-workflow",
       "description": "|-",
       "category": "quality-assurance",
       "dependencies": {
         "runtime": [
-          "python>=3.8",
-          "bash"
+          "bash",
+          "python>=3.8"
         ],
         "skills": [],
         "tools": [
@@ -200,7 +200,7 @@
     },
     {
       "id": "skill-optimizer",
-      "version": "0.8.0.1",
+      "version": "0.9.0.0",
       "path": "skills/skill-optimizer",
       "description": "Use when optimizing existing skill quality by best-practice rules",
       "category": "quality-assurance",
