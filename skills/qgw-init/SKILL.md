@@ -186,6 +186,26 @@ integration:
   CLAUDE.md: ✅ 已绑定 dev_rule.path
 ```
 
+### Step 4.7: governance 代码门禁装配（可选）
+
+询问用户是否启用 governance 代码级门禁（PostToolUse 规则校验 / 验证审计 /
+完整性自检 / 轮统计）。启用则在项目根目录执行：
+
+```bash
+node <governance 运行时路径>/scripts/install-hooks.js
+```
+
+脚本行为（幂等，可重复执行）：
+- 在项目 `.zcode/settings.json` 的 hooks 段写入 4 个 hook 入口（保留项目已有 hooks）
+- 对运行时目录写完整性锚清单（SessionStart 自检基准）
+
+随后引导用户完成（可选）：
+1. **领域包选择**：`.qgw/governance.json` 声明 `"packs": ["<pack-name>"]`（社区领域包见仓库根 `domains/`；也可从 `domains/_template/` 脚手架生成项目私有包放 `.qgw/packs/`）
+2. **项目本地规则**：`.qgw/rules/*.json` 声明式规则集（最高优先）
+3. **验证命令登记**：`verifyCommands` 配置让本地验证落机器凭证（结论行约定见 governance/README.md）
+
+> 运行时机制与配置字段详见仓库根 [governance/README.md](../../governance/README.md)。
+
 ### Step 5: PRD 目录结构创建（可选）
 
 询问用户是否需要创建 PRD 目录：

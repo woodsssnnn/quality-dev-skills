@@ -35,7 +35,10 @@ governance/
 │   ├── event-log.js        # 事件流 append（哈希链）
 │   ├── event-query.js      # 事件流查询（--tail/--chain-verify/--verify-last/--freq）
 │   ├── verify-links.js     # md 内链校验（CI / 单文件，断链 exit 1）
-│   └── blast-radius.js     # 符号影响面分析（def/call/ref 分类 + 同义符号线索）
+│   ├── blast-radius.js     # 符号影响面分析（def/call/ref 分类 + 同义符号线索）
+│   ├── install-hooks.js    # 把运行时装配进目标项目（幂等，作用于 cwd）
+│   └── distill-scope.js    # 知识蒸馏范围（增量水位 + 候选教训清单，人审闸）
+├── agents/                 # 中立 agent 模板：reviewer（验收三态+凭证核对）/ verifier（只跑不改）/ db-migrator（五步验证）
 └── tests/run-tests.js      # 自测（node governance/tests/run-tests.js）
 ```
 
@@ -139,6 +142,29 @@ my-pack/
 - **Stop hook 只写 stderr**：stdout 会触发 agent 继续形成死循环
 - **提示必须限频**：同 (kind,key) 每会话一次 + 会话封顶（lib/hint-state.js）
 - **Windows**：`.cmd` 包装用 `%~dp0` 定位脚本；hooks.json 中 command 不加引号
+
+## 安装到项目
+
+在目标项目根目录执行：
+
+```bash
+node <本仓库路径>/governance/scripts/install-hooks.js            # 装配（幂等）
+node <本仓库路径>/governance/scripts/install-hooks.js --remove   # 移除
+```
+
+写入项目 `.zcode/settings.json` 的 hooks 段（保留项目已有 hooks），并更新
+完整性锚清单。`qgw-init` 技能的 Step 4.7 会引导完成此步及后续配置。
+
+## 知识蒸馏（事件流 → 规则库，人审闸）
+
+```bash
+node governance/scripts/distill-scope.js            # 输出候选教训清单（dry-run）
+node governance/scripts/distill-scope.js --commit   # 人审通过后推进水位
+```
+
+高频失败签名（≥5 建议 upgrade 为 block 规则；≥3 建议写入项目规则）与
+提示曝光统计从这里出发，经人工审核后进入规则集/文档——事件流是事实，
+蒸馏决策留给人的判断。
 
 ## 自测
 

@@ -351,6 +351,58 @@ test('tool blast-radius: 命中分类 / 0 命中 exit 2', () => {
   assert.strictEqual(r2.status, 2, '0 命中应 exit 2');
 });
 
+// ─── 9. 装配与蒸馏 ────────────────────────────────────────────────────────
+test('install-hooks: 装配幂等 + 移除保留项目条目', () => {
+  const proj = path.join(TMP, 'hook-proj');
+  fs.mkdirSync(proj, { recursive: true });
+  // 预置项目自己的 hook 条目
+  fs.mkdirSync(path.join(proj, '.zcode'), { recursive: true });
+  fs.writeFileSync(path.join(proj, '.zcode', 'settings.json'), JSON.stringify({
+    hooks: { Stop: [{ hooks: [{ type: 'command', command: 'echo project-own' }] }] },
+  }));
+  const run = (args) => spawnSync('node',
+    [path.join(RUNTIME_ROOT, 'scripts', 'install-hooks.js'), ...args], {
+      encoding: 'utf-8', timeout: 30000, cwd: proj,
+      env: process.env,  // 继承 GOVERNANCE_DATA_HOME（锚清单入临时目录）
+    });
+  assert.strictEqual(run([]).status, 0, '首次装配应成功');
+  assert.strictEqual(run([]).status, 0, '重复装配应成功（幂等）');
+
+  const s1 = JSON.parse(fs.readFileSync(path.join(proj, '.zcode', 'settings.json'), 'utf-8'));
+  const ourStops = s1.hooks.Stop.filter(g =>
+    g.hooks.some(h => (h.command || '').includes('governance')));
+  assert.strictEqual(ourStops.length, 1, '重复装配后 governance 条目唯一');
+  assert.ok(s1.hooks.Stop.some(g => g.hooks.some(h => h.command === 'echo project-own')),
+    '项目自有 hook 保留');
+  assert.ok(s1.hooks.PostToolUse.length >= 1, 'PostToolUse 已写入');
+
+  assert.strictEqual(run(['--remove']).status, 0);
+  const s2 = JSON.parse(fs.readFileSync(path.join(proj, '.zcode', 'settings.json'), 'utf-8'));
+  assert.ok(!s2.hooks.PostToolUse, '移除后 PostToolUse 清空');
+  assert.ok(s2.hooks.Stop.some(g => g.hooks.some(h => h.command === 'echo project-own')),
+    '移除不影响项目自有 hook');
+});
+
+test('distill-scope: 增量清单 + 水位推进', () => {
+  const evolog = require('../scripts/event-log.js');
+  // 非测试会话（无 e2e- 前缀）的失败事件 → 应进蒸馏清单
+  for (let i = 0; i < 3; i++) {
+    evolog.logGateEvent({ result: 'fail', ruleSet: 't', rule: 'R9', sig: 't/R9',
+      file: '/x/a.js', session: 'distill-sess', detail: 'd' });
+  }
+  const run = (args) => spawnSync('node',
+    [path.join(RUNTIME_ROOT, 'scripts', 'distill-scope.js'), ...args], {
+      encoding: 'utf-8', timeout: 30000, env: process.env,
+    });
+  const dry = run([]);
+  assert.strictEqual(dry.status, 0);
+  assert.ok(dry.stdout.includes('t/R9'), '清单应包含失败签名');
+
+  assert.strictEqual(run(['--commit']).status, 0, '水位推进应成功');
+  const again = run([]);
+  assert.ok(!again.stdout.includes('| t/R9 |'), '水位推进后不再重复统计');
+});
+
 // ─── 汇总 ─────────────────────────────────────────────────────────────────
 const failed = results.filter(r => !r.ok);
 console.log(`\n${failed.length === 0 ? 'ALL PASS' : `SOME FAIL (${failed.length})`}（共 ${results.length} 项）`);
