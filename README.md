@@ -1,8 +1,16 @@
 # quality-dev-skills
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/woodsssnnn/quality-dev-skills/actions/workflows/quality-check.yml/badge.svg)](https://github.com/woodsssnnn/quality-dev-skills/actions/workflows/quality-check.yml)
+[![version](https://img.shields.io/badge/version-0.9.0.x-1f6feb)](version.json)
+[![skills](https://img.shields.io/badge/skills-6-238636)](skills/)
+[![platforms](https://img.shields.io/badge/platforms-6-8957e5)](platforms/)
+
 [English](README.en.md) | 中文
 
 通用 AI 技能仓库。提供**代码治理运行时**、质量门禁工作流、技能优化框架、领域包开放机制和项目技能模板，可被任何项目复用——仓库保持中立，不含任何领域专属内容。
+
+![三层治理架构](docs/figures/architecture.svg)
 
 [贡献指南](CONTRIBUTING.md) | [行为准则](CODE_OF_CONDUCT.md) | [安全策略](SECURITY.md) | [版本历史](CHANGELOG.md) | [MIT License](LICENSE)
 

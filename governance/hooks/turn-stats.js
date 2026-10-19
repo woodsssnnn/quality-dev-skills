@@ -77,7 +77,7 @@ try {
     parts.push('编辑未验证（完成前请跑本地验证并留下凭证）');
   }
 
-  const line = `[governance 统计] 本轮：${parts.join(' / ')}`;
+  const line = `[governance ▍统计] 本轮：${parts.join(' / ')}`;
   console.error(line);  // stderr，不触发 agent 继续
 
   // 写 turn-summary 标记（下一轮的边界）

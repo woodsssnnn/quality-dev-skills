@@ -103,6 +103,7 @@ function buildRepeatHint(failSigs, minCount) {
 // ─── CLI ──────────────────────────────────────────────────────────────────
 if (require.main === module) {
   const args = process.argv.slice(2);
+  console.log('🛡 QGW · governance · event-query');
   const events = readEvents();
 
   if (args.includes('--chain-verify')) {

@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="520" viewBox="0 0 880 520" role="img" aria-label="quality-dev-skills three-layer governance architecture">
+  <defs>
+    <style>
+      text { font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #c9d1d9; }
+      .title { font-size: 21px; font-weight: 600; fill: #f0f6fc; }
+      .subtitle { font-size: 12px; fill: #8b949e; }
+      .layer-title { font-size: 14.5px; font-weight: 600; }
+      .layer-sub { font-size: 11.5px; fill: #8b949e; }
+      .chip { font-size: 11.5px; fill: #0d1117; font-weight: 600; }
+      .box-title { font-size: 13px; font-weight: 600; }
+      .box-body { font-size: 11px; fill: #8b949e; }
+      .side { font-size: 11px; fill: #8b949e; }
+    </style>
+    <marker id="arrowUp" viewBox="0 0 10 10" refX="5" refY="9" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 10 L 5 0 L 10 10 z" fill="#8b949e"/>
+    </marker>
+  </defs>
+
+  <rect width="880" height="520" rx="14" fill="#0d1117"/>
+  <rect x="1" y="1" width="878" height="518" rx="13" fill="none" stroke="#30363d"/>
+
+  <text x="440" y="42" text-anchor="middle" class="title">quality-dev-skills · 三层治理架构</text>
+  <text x="440" y="62" text-anchor="middle" class="subtitle">把「AI 说自己做对了」变成「机器证明它做对了」</text>
+
+  <!-- 优先级轴 -->
+  <line x1="52" y1="430" x2="52" y2="112" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowUp)"/>
+  <text x="40" y="120" class="side" transform="rotate(-90 40 150)" text-anchor="start">覆盖优先级 高 → 低</text>
+
+  <!-- 项目层 -->
+  <rect x="90" y="96" width="740" height="84" rx="10" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="112" y="124" class="layer-title" fill="#3fb950">项目层 Project</text>
+  <text x="112" y="144" class="layer-sub">目标项目内 · 覆盖一切下层（最高优先）</text>
+  <rect x="112" y="152" width="108" height="20" rx="10" fill="#238636"/><text x="166" y="166" text-anchor="middle" class="chip">.qgw/rules</text>
+  <rect x="230" y="152" width="112" height="20" rx="10" fill="#238636"/><text x="286" y="166" text-anchor="middle" class="chip">.qgw/packs</text>
+  <rect x="352" y="152" width="104" height="20" rx="10" fill="#238636"/><text x="404" y="166" text-anchor="middle" class="chip">AGENTS.md</text>
+  <rect x="466" y="152" width="150" height="20" rx="10" fill="#238636"/><text x="541" y="166" text-anchor="middle" class="chip">project-dev-rule</text>
+
+  <!-- 领域包层 -->
+  <rect x="90" y="196" width="740" height="84" rx="10" fill="#1d1b2e" stroke="#bc8cff" stroke-width="1.5"/>
+  <text x="112" y="224" class="layer-title" fill="#bc8cff">领域包层 Domain Packs</text>
+  <text x="112" y="244" class="layer-sub">社区贡献 domains/&lt;pack&gt;/ 或项目私有 · 本仓库零内置领域内容</text>
+  <rect x="112" y="252" width="96" height="20" rx="10" fill="#8957e5"/><text x="160" y="266" text-anchor="middle" class="chip">规则集</text>
+  <rect x="218" y="252" width="96" height="20" rx="10" fill="#8957e5"/><text x="266" y="266" text-anchor="middle" class="chip">提示注入</text>
+  <rect x="324" y="252" width="120" height="20" rx="10" fill="#8957e5"/><text x="384" y="266" text-anchor="middle" class="chip">验证命令约定</text>
+  <rect x="454" y="252" width="96" height="20" rx="10" fill="#8957e5"/><text x="502" y="266" text-anchor="middle" class="chip">项目标记</text>
+
+  <!-- Base 层 -->
+  <rect x="90" y="296" width="740" height="176" rx="10" fill="#0c2233" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="112" y="324" class="layer-title" fill="#58a6ff">Base 层 quality-dev-skills（中立）</text>
+
+  <rect x="112" y="338" width="226" height="118" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="126" y="360" class="box-title" fill="#58a6ff">governance/</text>
+  <text x="126" y="380" class="box-body">代码级门禁运行时（无感）</text>
+  <text x="126" y="398" class="box-body">· PostToolUse 规则引擎（block→exit 2）</text>
+  <text x="126" y="416" class="box-body">· 验证机器凭证（DoD 审计链）</text>
+  <text x="126" y="434" class="box-body">· 哈希链事件流 + 完整性自保护</text>
+  <text x="126" y="452" class="box-body">· 知识蒸馏（人审闸）</text>
+
+  <rect x="350" y="338" width="226" height="118" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="364" y="360" class="box-title" fill="#58a6ff">skills/</text>
+  <text x="364" y="380" class="box-body">流程级质量门禁（半无感）</text>
+  <text x="364" y="398" class="box-body">· quality-gate-workflow（双 Gate）</text>
+  <text x="364" y="416" class="box-body">· prd-parse（文档 1:1 解析）</text>
+  <text x="364" y="434" class="box-body">· skill-optimizer / qgw-init</text>
+  <text x="364" y="452" class="box-body">· api-design-review 等垂直包</text>
+
+  <rect x="588" y="338" width="222" height="118" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="602" y="360" class="box-title" fill="#58a6ff">shared/ + domains/</text>
+  <text x="602" y="380" class="box-body">契约与模板</text>
+  <text x="602" y="398" class="box-body">· 领域包契约 + 脚手架 + 校验器</text>
+  <text x="602" y="416" class="box-body">· 技能模板 + 技能协议</text>
+  <text x="602" y="434" class="box-body">· 输出品牌规范（对话内观感）</text>
+  <text x="602" y="452" class="box-body">· domains/_template/（示例骨架）</text>
+
+  <text x="440" y="504" text-anchor="middle" class="subtitle">闭环：事件流记录 → 蒸馏候选（人审）→ 规则库 → 下行注入 → 再犯率下降</text>
+</svg>

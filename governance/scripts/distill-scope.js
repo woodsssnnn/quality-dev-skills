@@ -62,6 +62,8 @@ for (const e of events) {
 
 // ─── 输出候选清单（markdown，供人审）──────────────────────────────────────
 const lines = [];
+lines.push('> 🛡 QGW · governance · 蒸馏候选清单');
+lines.push('');
 lines.push(`# 蒸馏候选清单（增量自 ${lastTs || '（首次，全量）'}）`);
 lines.push('');
 lines.push(`- 事件范围：${events.length} 条 / ${sessionSet.size} 个会话`);

@@ -46,6 +46,7 @@
 - SKILL.md 保持中文，README 中文为主、英文为辅
 - 遵循 `skill-optimizer` 的 9 条评分规则
 - reference 文件放在技能目录的 `references/` 下
+- 对话内可见输出遵循 [shared/output-brand.md](shared/output-brand.md) 品牌规范（报头/语义 emoji/进度条）
 
 ### 提交信息格式
 

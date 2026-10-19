@@ -21,10 +21,10 @@ PATTERN="${_a}${_b}|${_c}${_d}"
 
 hits="$(git grep -iInE "$PATTERN" -- . || true)"
 if [ -n "$hits" ]; then
-  echo "❌ 发现来源项目品牌词残留（文件:行号:内容）："
+  echo "🛡 QGW · ban-scan · ❌ 发现来源项目品牌词残留（文件:行号:内容）："
   printf '%s\n' "$hits"
   echo ""
   echo "请将这些措辞替换为中立表述后重新提交。"
   exit 1
 fi
-echo "✅ 中立性检查通过：未发现来源项目品牌词"
+echo "🛡 QGW · ban-scan · ✅ 中立性检查通过：未发现来源项目品牌词"

@@ -48,7 +48,7 @@ def main() -> int:
         text = text.replace(TEMPLATE_ID, name).replace("我的领域包（改为你的人类可读名称）", name)
         f.write_text(text, encoding="utf-8")
 
-    print(f"✅ 已生成领域包骨架: {dst}")
+    print(f"🛡 QGW · domains · ✅ 已生成领域包骨架: {dst}")
     print("后续：")
     print(f"  1. 编辑 {name}/pack.json 与 rules/example.json 为你的领域规则")
     print(f"  2. 校验：python scripts/validate-domain-pack.py <该包目录>")

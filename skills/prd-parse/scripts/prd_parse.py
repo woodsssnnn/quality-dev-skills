@@ -1323,6 +1323,7 @@ def main() -> int:
     if args.json:
         print(json.dumps(manifest, ensure_ascii=False, indent=2))
     else:
+        print("🛡 QGW · prd-parse")
         for r in results:
             flag = {"ok": "✓", "warning": "△", "failed": "✗", "skipped": "⏭"}[r["status"]]
             line = f"{flag} {r['source']} → {r['output']} [{r['status']}]"

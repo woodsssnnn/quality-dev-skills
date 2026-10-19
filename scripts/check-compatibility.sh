@@ -58,46 +58,28 @@ if [ -z "$TEMPLATE_VERSION" ] || [ -z "$PROJECT_VERSION" ]; then
     exit 1
 fi
 
-# 版本比较函数
+# 版本比较函数：比较结果输出到 stdout（-1 / 0 / 1），函数本身恒 return 0。
+# 注意：shell 返回码只能是 0-255，用 return 传 -1 会变成 255 导致调用方
+# 的 -lt 0 判断静默失效（SC2152），因此改用 stdout 传值。
 version_compare() {
     local v1=$1
     local v2=$2
-    
+
     # 分割版本号（支持 4 级: Major.Minor.Patch.Iteration）
     IFS='.' read -r v1_major v1_minor v1_patch v1_iter <<< "$v1"
     IFS='.' read -r v2_major v2_minor v2_patch v2_iter <<< "$v2"
     v1_iter=${v1_iter:-0}
     v2_iter=${v2_iter:-0}
-    
-    # 比较主版本号
-    if [ "$v1_major" -gt "$v2_major" ]; then
-        return 1
-    elif [ "$v1_major" -lt "$v2_major" ]; then
-        return -1
-    fi
-    
-    # 比较次版本号
-    if [ "$v1_minor" -gt "$v2_minor" ]; then
-        return 1
-    elif [ "$v1_minor" -lt "$v2_minor" ]; then
-        return -1
-    fi
-    
-    # 比较补丁版本号
-    if [ "$v1_patch" -gt "$v2_patch" ]; then
-        return 1
-    elif [ "$v1_patch" -lt "$v2_patch" ]; then
-        return -1
-    fi
-    
-    # 比较迭代号（第 4 级）
-    if [ "$v1_iter" -gt "$v2_iter" ]; then
-        return 1
-    elif [ "$v1_iter" -lt "$v2_iter" ]; then
-        return -1
-    fi
-    
-    return 0
+
+    if [ "$v1_major" -gt "$v2_major" ]; then echo 1; return 0; fi
+    if [ "$v1_major" -lt "$v2_major" ]; then echo -1; return 0; fi
+    if [ "$v1_minor" -gt "$v2_minor" ]; then echo 1; return 0; fi
+    if [ "$v1_minor" -lt "$v2_minor" ]; then echo -1; return 0; fi
+    if [ "$v1_patch" -gt "$v2_patch" ]; then echo 1; return 0; fi
+    if [ "$v1_patch" -lt "$v2_patch" ]; then echo -1; return 0; fi
+    if [ "$v1_iter" -gt "$v2_iter" ]; then echo 1; return 0; fi
+    if [ "$v1_iter" -lt "$v2_iter" ]; then echo -1; return 0; fi
+    echo 0
 }
 
 # 读取兼容性配置
@@ -119,11 +101,8 @@ if [ "$VERBOSE" = true ]; then
 fi
 
 # 检查项目版本是否在兼容范围内
-version_compare "$PROJECT_VERSION" "$MIN_PROJECT_VERSION"
-MIN_RESULT=$?
-
-version_compare "$PROJECT_VERSION" "$MAX_PROJECT_VERSION"
-MAX_RESULT=$?
+MIN_RESULT=$(version_compare "$PROJECT_VERSION" "$MIN_PROJECT_VERSION")
+MAX_RESULT=$(version_compare "$PROJECT_VERSION" "$MAX_PROJECT_VERSION")
 
 if [ $MIN_RESULT -lt 0 ]; then
     echo "❌ 不兼容: 项目版本 ($PROJECT_VERSION) 低于最低要求 ($MIN_PROJECT_VERSION)"
@@ -135,8 +114,8 @@ elif [ $MAX_RESULT -gt 0 ]; then
 fi
 
 # 检查模板主版本是否兼容
-TEMPLATE_MAJOR=$(echo $TEMPLATE_VERSION | cut -d. -f1)
-PROJECT_MAJOR=$(echo $PROJECT_VERSION | cut -d. -f1)
+TEMPLATE_MAJOR=$(echo "$TEMPLATE_VERSION" | cut -d. -f1)
+PROJECT_MAJOR=$(echo "$PROJECT_VERSION" | cut -d. -f1)
 
 if [ "$TEMPLATE_MAJOR" -gt "$PROJECT_MAJOR" ]; then
     echo "❌ 不兼容: 模板主版本 ($TEMPLATE_MAJOR) 高于项目主版本 ($PROJECT_MAJOR)"
