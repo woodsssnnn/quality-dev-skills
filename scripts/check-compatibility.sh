@@ -104,11 +104,11 @@ fi
 MIN_RESULT=$(version_compare "$PROJECT_VERSION" "$MIN_PROJECT_VERSION")
 MAX_RESULT=$(version_compare "$PROJECT_VERSION" "$MAX_PROJECT_VERSION")
 
-if [ $MIN_RESULT -lt 0 ]; then
+if [ "$MIN_RESULT" -lt 0 ]; then
     echo "❌ 不兼容: 项目版本 ($PROJECT_VERSION) 低于最低要求 ($MIN_PROJECT_VERSION)"
     echo "请升级项目技能到 $MIN_PROJECT_VERSION 或更高版本"
     exit 1
-elif [ $MAX_RESULT -gt 0 ]; then
+elif [ "$MAX_RESULT" -gt 0 ]; then
     echo "⚠️  警告: 项目版本 ($PROJECT_VERSION) 高于推荐最高版本 ($MAX_PROJECT_VERSION)"
     echo "可能需要更新模板以支持新版本"
 fi
