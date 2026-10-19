@@ -1,0 +1,51 @@
+{
+  "description": "根插件 hook 适配层——实现唯一原则：本文件只做注册转发，全部指向 governance/hooks/ 下的实现（governance 作为独立插件分发时同批脚本不重复执行）。已知边界：命令为 .cmd 包装（Windows 优先）；mac/linux 下技能与 agents 可用，hooks 跨平台适配见 platforms/zcode/AGENTS.md。",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/governance/hooks/integrity-check.cmd",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/governance/hooks/run-checks.cmd",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/governance/hooks/prompt-inject.cmd",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/governance/hooks/turn-stats.cmd",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,22 +1,15 @@
 {
   "name": "quality-dev-skills-marketplace",
-  "description": "通用质量与治理技能市场——流程级质量门禁技能 + 代码级治理运行时插件，中立开放、领域内容经 domain pack 由社区贡献。",
+  "description": "通用质量与治理技能市场。整仓即插件（根插件自包含：6 技能 + governance 代码门禁运行时 + agent 模板）；如需拆分安装（仅技能 / 仅治理），用仓库 scripts/build-zcode-plugin.py 构建 dist/ 本地市场。",
   "owner": {
     "name": "quality-dev-skills"
   },
   "plugins": [
     {
       "name": "quality-dev-skills",
-      "description": "质量门禁技能集：流程级质量门禁（PRD→Plan→Verifier）+ 技能优化 + PRD 原始文档解析 + 初始化引导。注意：本条目以相对路径引用仓库 skills/，宿主缓存拷贝场景下请用 scripts/build-zcode-plugin.py 构建自包含插件（见 platforms/zcode/AGENTS.md）。",
+      "description": "质量与治理全家桶：6 技能（流程级质量门禁/PRD 解析/技能优化/初始化/垂直包）+ governance 代码级门禁运行时（声明式规则引擎 + 验证机器凭证 + 哈希链事件流 + 完整性自保护）+ 3 中立 agent 模板。仓库中立，领域规则经 domain pack 由社区贡献。",
       "author": { "name": "quality-dev-skills" },
-      "source": "./platforms/zcode",
-      "category": "development"
-    },
-    {
-      "name": "governance",
-      "description": "通用代码治理运行时：声明式规则门禁 + 验证机器凭证 + 哈希链事件流 + 完整性自保护。hooks/agents 形态，配置全部外置。",
-      "author": { "name": "quality-dev-skills" },
-      "source": "./governance",
+      "source": "./",
       "category": "development"
     }
   ]

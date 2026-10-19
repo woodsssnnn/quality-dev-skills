@@ -40,6 +40,16 @@
   },
   "changelog": [
     {
+      "version": "0.9.0.3",
+      "date": "2026-10-19",
+      "changes": [
+        "P0: GitHub 分发一等公民——仓库根本身声明为自包含插件（根双清单 + 全部能力指向仓库内路径），ZCode/Claude Code 市场一行安装全家桶（6 技能 + governance hooks/agents）",
+        "P1: 根 hooks 适配层（实现唯一原则：注册转发至 governance/hooks，双清单场景不重复执行）；根市场清单收敛为单一根插件条目（防 hooks 双跑）",
+        "P2: 已知边界如实声明：hooks 为 Windows 优先（.cmd 包装），跨平台适配待实验（ZCode 带引号变量不展开的坑已记录）",
+        "README 双语与 qgw-init 平台文档同步 GitHub 安装方式；dist 构建保留为拆分安装路径"
+      ]
+    },
+    {
       "version": "0.9.0.2",
       "date": "2026-10-19",
       "changes": [

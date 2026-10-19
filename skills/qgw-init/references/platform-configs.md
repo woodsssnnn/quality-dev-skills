@@ -291,22 +291,26 @@ bash skills/qgw-init/scripts/qgw-init.sh --platform opencode --force --yes
 
 项目根目录存在 `.zcode/` 目录。
 
-### 安装（自包含构建，推荐）
+### 安装（GitHub 一等公民，推荐）
 
-ZCode 安装插件时会把插件目录拷贝进缓存，插件内引用仓库内相对路径的声明
-在缓存副本中会失效，因此先构建自包含插件：
+仓库根本身是自包含插件（双清单 + 技能/hooks/agents 全在仓库内），在 ZCode
+"添加插件市场"直接填：
+
+```
+woodsssnnn/quality-dev-skills
+```
+
+（Claude Code 同样适用；hooks 当前 Windows 优先，mac/linux 技能与 agents 可用。）
+
+如需拆分安装（仅技能 / 仅治理），本地构建 dist：
 
 ```bash
 # 在本仓库根目录执行
 python scripts/build-zcode-plugin.py
 ```
 
-产出 `dist/`（市场清单 + 技能插件 + governance 治理运行时插件），然后在
-ZCode 中执行：
-
-```
-/plugin marketplace add <仓库根目录>/dist
-```
+产出 `dist/`（市场清单 + 技能插件 + governance 插件），然后在 ZCode 中执行
+`/plugin marketplace add <仓库根目录>/dist`。
 
 ### 项目级治理装配（可选）
 
