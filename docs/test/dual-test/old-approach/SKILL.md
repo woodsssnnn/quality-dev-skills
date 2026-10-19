@@ -103,5 +103,5 @@ metadata:
 
 ## 参考
 
-- [共享最佳实践](../shared/agent-skills-best-practices.md)
-- [质量门禁工作流](../../quality-gate-workflow/SKILL.md)
+- [共享最佳实践](../../../../shared/agent-skills-best-practices.md)
+- [质量门禁工作流](../../../../skills/quality-gate-workflow/SKILL.md)

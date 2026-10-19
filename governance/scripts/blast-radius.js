@@ -162,7 +162,7 @@ const synonyms = suggestSynonyms(symbol)
 if (asJson) {
   console.log(JSON.stringify({ symbol, root, total: hits.length, byRole, synonyms }, null, 2));
 } else {
-  console.log(`[blast-radius] ${symbol}: ${hits.length} 处引用（def ${byRole.def.length} / call ${byRole.call.length} / ref ${byRole.ref.length}）`);
+  console.log(`🛡 QGW · blast-radius · ${symbol}：${hits.length} 处引用（def ${byRole.def.length} / call ${byRole.call.length} / ref ${byRole.ref.length}）`);
   const show = (role, label, cap) => {
     if (!byRole[role].length) return;
     console.log(`\n— ${label}（${byRole[role].length}${byRole[role].length > cap ? `，仅显示前 ${cap}` : ''}）—`);

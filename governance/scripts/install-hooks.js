@@ -102,6 +102,7 @@ const anchorPath = path.join(getDataHome(), 'integrity-anchor.json');
 const snap = snapshotTree(RUNTIME_ROOT);
 fs.writeFileSync(anchorPath, JSON.stringify(snap, null, 2));
 
+console.log('🛡 QGW · governance · install-hooks');
 console.log(`✅ governance hooks 已装配到 ${settingsPath}`);
 console.log(`✅ 完整性锚清单已更新（${Object.keys(snap.files).length} 文件）: ${anchorPath}`);
 console.log('');

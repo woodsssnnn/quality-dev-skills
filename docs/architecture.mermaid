@@ -1,0 +1,26 @@
+%% 三层治理架构（源文件：改架构时同步更新 docs/figures/architecture.svg）
+%% GitHub 可直接渲染本文件内容（```mermaid 代码块）
+
+flowchart TB
+    subgraph PROJECT["项目层 Project（最高优先）"]
+        direction LR
+        QGW_RULES[".qgw/rules 项目规则"] --- QGW_PACKS[".qgw/packs 私有领域包"] --- AGENTS["AGENTS.md / project-dev-rule"]
+    end
+
+    subgraph DOMAIN["领域包层 Domain Packs（社区贡献 / 项目私有，仓库零内置）"]
+        direction LR
+        PACK_RULES["规则集 rules/*.json"] --- PACK_CFG["提示/验证约定 governance.json"] --- PACK_SPEC["契约 domain-pack-spec.md"]
+    end
+
+    subgraph BASE["Base 层 quality-dev-skills（中立）"]
+        direction LR
+        GOV["governance/<br/>代码级门禁运行时<br/>PostToolUse 规则引擎 · verify 机器凭证<br/>哈希链事件流 · 完整性自保护"]
+        SKILLS["skills/<br/>quality-gate-workflow（双 Gate）<br/>prd-parse · skill-optimizer<br/>qgw-init · 垂直包"]
+        SHARED["shared/ + domains/<br/>领域包契约 + 脚手架 + 校验器<br/>技能模板 · 输出品牌规范"]
+    end
+
+    PROJECT -->|"覆盖"| DOMAIN -->|"覆盖"| BASE
+
+    GOV --> EV["事件流（append-only 哈希链）"]
+    EV --> DISTILL["蒸馏候选（distill-scope，人审闸）"]
+    DISTILL -->|"人审通过"| PACK_RULES

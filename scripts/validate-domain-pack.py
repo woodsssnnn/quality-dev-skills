@@ -148,11 +148,11 @@ def main() -> int:
                 fail(f"中立性红线：{f.relative_to(pack_dir)} 含来源项目品牌词", errors)
 
     if errors:
-        print(f"✗ {pack_dir.name} 校验失败（{len(errors)} 项）：")
+        print(f"🛡 QGW · domains · ❌ {pack_dir.name} 校验失败（{len(errors)} 项）：")
         for e in errors:
             print(f"  - {e}")
         return 1
-    print(f"✓ {pack_dir.name} 校验通过"
+    print(f"🛡 QGW · domains · ✅ {pack_dir.name} 校验通过"
           + (f"（{len(rule_files)} 规则集）" if rule_files else ""))
     return 0
 

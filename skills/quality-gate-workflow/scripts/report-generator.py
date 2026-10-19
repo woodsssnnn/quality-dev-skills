@@ -444,14 +444,16 @@ def generate_report(report_type: str, state: dict) -> str | None:
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 渲染内容
+    # 渲染内容（统一品牌报头/页脚，见 shared/output-brand.md）
+    brand = f"> 🛡 QGW · quality-gate-workflow · {report_type}\n\n"
+    footer = "\n---\n> 🛡 由 quality-dev-skills 生成 · 机器可复核（event-query --verify-last）\n"
     if report_type == "prd-impact":
         # prd-impact 需要 prd_data，从 state 中取
         prd_changes = state.get("prd_change", [])
         prd_data = prd_changes[-1] if prd_changes else {}
-        content = renderer(state, prd_data)
+        content = brand + renderer(state, prd_data) + footer
     else:
-        content = renderer(state, context)
+        content = brand + renderer(state, context) + footer
 
     # 生成文件名
     date_str = _today()

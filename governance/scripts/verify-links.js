@@ -110,11 +110,11 @@ for (const f of [...new Set(files)]) {
 }
 
 if (!quiet) {
-  console.log(`[verify-links] ${fileCount} 个 md / ${totalChecked} 个内链`);
+  console.log(`🛡 QGW · verify-links · ${fileCount} md / ${totalChecked} 内链`);
 }
 if (brokenCount > 0) {
-  console.log(`[verify-links] ❌ ${brokenCount} 个断链/错误`);
+  console.log(`🛡 QGW · verify-links · ❌ ${brokenCount} 个断链/错误`);
   process.exit(1);
 }
-console.log('[verify-links] ✅ 全部通过');
+console.log('🛡 QGW · verify-links · ✅ 全部通过');
 process.exit(0);

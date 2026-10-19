@@ -1,8 +1,16 @@
 # quality-dev-skills
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/woodsssnnn/quality-dev-skills/actions/workflows/quality-check.yml/badge.svg)](https://github.com/woodsssnnn/quality-dev-skills/actions/workflows/quality-check.yml)
+[![version](https://img.shields.io/badge/version-0.9.0.x-1f6feb)](version.json)
+[![skills](https://img.shields.io/badge/skills-6-238636)](skills/)
+[![platforms](https://img.shields.io/badge/platforms-6-8957e5)](platforms/)
+
 English | [中文](README.md)
 
 Universal AI skills repository — a **code-governance runtime**, process-level quality gate workflow, skill optimization framework, and an open domain-pack mechanism, reusable by any project. The repo stays neutral: zero domain-specific content.
+
+![Three-layer governance architecture](docs/figures/architecture.svg)
 
 [Contributing](CONTRIBUTING.md) | [Code of Conduct](CODE_OF_CONDUCT.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 

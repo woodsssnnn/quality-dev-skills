@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:
 
 jobs:
   link-check:
@@ -128,7 +129,9 @@ jobs:
           $files = Get-ChildItem -Path scripts -Filter "*.ps1" -Recurse
           $errors = 0
           foreach ($f in $files) {
-            $null = [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$parseErrors)
+            $tokens = $null
+            $parseErrors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$tokens, [ref]$parseErrors)
             if ($parseErrors.Count -eq 0) {
               Write-Host "  PASS $($f.Name)"
             } else {

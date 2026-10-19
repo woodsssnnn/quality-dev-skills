@@ -40,6 +40,16 @@
   },
   "changelog": [
     {
+      "version": "0.9.0.2",
+      "date": "2026-10-19",
+      "changes": [
+        "P0: 修复 CI 存量红灯——check-compatibility.sh 的 return -1 改为 stdout 传值（shell 返回码 0-255，-lt 0 判断原本静默失效）+ 引号加固；quality-check.yml PowerShell job 预声明解析变量；补 workflow_call 使 release.yml 可复用调用",
+        "P1: 输出品牌规范 shared/output-brand.md（报头/语义 emoji/进度条/页脚/机器输出豁免），套用到全部对话内可见输出：governance 五个 CLI、report-generator 六种报告（38 测试全过）、prd-parse、领域包工具、ban-scan、turn-stats 紧凑前缀",
+        "P1: 仓库门面——README 徽章行（License/CI/version/skills/platforms）、深色风格三层架构 SVG（docs/figures/architecture.svg）、Mermaid 源（docs/architecture.mermaid）、双语同步",
+        "P2: CONTRIBUTING 技能开发规范挂接输出品牌要求；修复 docs/test 旧文档 2 处断链"
+      ]
+    },
+    {
       "version": "0.9.0.1",
       "date": "2026-10-19",
       "changes": [
