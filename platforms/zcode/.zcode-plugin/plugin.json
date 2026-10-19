@@ -1,0 +1,12 @@
+{
+  "name": "quality-dev-skills",
+  "version": "0.9.0.0",
+  "description": "质量门禁技能集——流程级质量门禁（PRD→Plan→Verifier）、技能优化框架、PRD 原始文档解析、项目初始化引导。经 ZCode 插件市场安装；配套 governance 插件（代码级门禁运行时）建议一并安装。",
+  "description_i18n": {
+    "en": "Quality gate skill set — process-level quality gating (PRD→Plan→Verifier), skill optimizer, raw PRD document parsing, project init wizard. Install via ZCode plugin marketplace; install the companion governance plugin (code-level gating runtime) as well.",
+    "zh-CN": "质量门禁技能集——流程级质量门禁（PRD→Plan→Verifier）、技能优化框架、PRD 原始文档解析、项目初始化引导。经 ZCode 插件市场安装；配套 governance 插件（代码级门禁运行时）建议一并安装。"
+  },
+  "author": { "name": "quality-dev-skills" },
+  "license": "MIT",
+  "skills": "../../skills/"
+}

@@ -18,7 +18,7 @@
       "description": "技能自动优化框架"
     },
     "qgw-init": {
-      "version": "0.9.0.0",
+      "version": "0.9.0.1",
       "description": "项目初始化引导技能"
     },
     "api-design-review": {
@@ -39,6 +39,16 @@
     "description": "通用代码治理运行时（hooks 门禁/声明式规则引擎/事件流/判题机/领域包契约）"
   },
   "changelog": [
+    {
+      "version": "0.9.0.1",
+      "date": "2026-10-19",
+      "changes": [
+        "P1: 新增 platforms/zcode/ 适配器（.zcode-plugin/plugin.json + AGENTS.md），qgw-init 平台检测与 platform-configs.md 同步支持 ZCode",
+        "P1: 新增 scripts/build-zcode-plugin.py——构建自包含 ZCode 插件市场（dist/：技能插件 + governance 插件 + 市场清单），规避宿主缓存拷贝导致的外部相对路径失效",
+        "P2: 根 marketplace.json 增加技能插件条目（实验性直连，缓存场景推荐 dist 构建）",
+        "README 多平台表补 ZCode 行"
+      ]
+    },
     {
       "version": "0.9.0.0",
       "date": "2026-10-19",

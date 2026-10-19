@@ -95,7 +95,8 @@ bash scripts/update-project-skill.sh /path/to/project
 | **Claude Code** | `platforms/claude-code/` | 插件安装 |
 | **Codex** | `platforms/codex/` | 插件安装 |
 | **OpenCode** | `platforms/opencode/` | 服务器插件 |
-| **MiMoCode** | `platforms/minocode/` | 插件安装 |
+| **MiMoCode** | `platforms/minicode/` | 插件安装 |
+| **ZCode** | `platforms/zcode/` | 插件市场（`python scripts/build-zcode-plugin.py` 后 `/plugin marketplace add <repo>/dist`） |
 | **通用** | `platforms/general/AGENTS.md` | 复制AGENTS.md |
 
 详见 [多平台兼容方案](#多平台支持)。

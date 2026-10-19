@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0.1 (2026-10-19)
+
+- Step 2 平台检测新增 ZCode（`.zcode/` 目录 → 插件市场安装）
+- platform-configs.md 新增 ZCode 章节（自包含构建 + `/plugin marketplace add` + 项目级治理装配）
+- Step 4.7 governance 门禁装配引导（0.9.0.0 引入，此处补记）
+
 ## 0.8.0.1 (2026-06-19)
 
 - SKILL.md 补齐 `category` / `triggers` / `integration` frontmatter

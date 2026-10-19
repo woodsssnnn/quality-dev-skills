@@ -25,7 +25,7 @@ triggers:
     - setup QGW
     - setup quality gate
 metadata:
-  version: 0.9.0.0
+  version: 0.9.0.1
 integration:
   extends: []
   extended_by:
@@ -79,6 +79,7 @@ integration:
 | Codex | `codex` | `AGENTS.md` |
 | OpenCode | `opencode` | `plugin.mjs` |
 | MiMoCode | `mimo` | `plugin.json` |
+| ZCode | `zcode` | 插件市场安装（`.zcode/`） |
 | General | `general` | `AGENTS.md` |
 
 **自动检测规则**：
@@ -86,7 +87,8 @@ integration:
 2. 存在 `AGENTS.md` 且含 "codex" 关键词 → 建议 Codex
 3. 存在 `opencode.config.*` → 建议 OpenCode
 4. 存在 `.mimo/` 目录 → 建议 MiMoCode
-5. 以上均无 → 建议 General
+5. 存在 `.zcode/` 目录 → 建议 ZCode
+6. 以上均无 → 建议 General
 
 用户可覆盖自动检测结果。选择后加载对应平台配置模板 → 详见 [references/platform-configs.md](references/platform-configs.md)。
 

@@ -6,6 +6,13 @@
   },
   "plugins": [
     {
+      "name": "quality-dev-skills",
+      "description": "质量门禁技能集：流程级质量门禁（PRD→Plan→Verifier）+ 技能优化 + PRD 原始文档解析 + 初始化引导。注意：本条目以相对路径引用仓库 skills/，宿主缓存拷贝场景下请用 scripts/build-zcode-plugin.py 构建自包含插件（见 platforms/zcode/AGENTS.md）。",
+      "author": { "name": "quality-dev-skills" },
+      "source": "./platforms/zcode",
+      "category": "development"
+    },
+    {
       "name": "governance",
       "description": "通用代码治理运行时：声明式规则门禁 + 验证机器凭证 + 哈希链事件流 + 完整性自保护。hooks/agents 形态，配置全部外置。",
       "author": { "name": "quality-dev-skills" },
